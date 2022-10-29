@@ -28,7 +28,6 @@
 \usepackage{graphicx,color, caption2}
 \usepackage{epsfig}
 \usepackage{fancyhdr}
-\pagestyle{fancy}
 \usepackage{listings}
 \usepackage{color}
 \usepackage{makeidx}
@@ -63,23 +62,28 @@
 
    \tableofcontents
 
-   \section{Dépassement de mémoire : Pwnkit}
-   		\subsection{Quel est le principe de cette faille ?}
-   		
+   \section{Dépassement de mémoire : Pwnkit}   		
 		\subsection{Origine de la faille}   		
    		\begin{itemize}
 			\item 	Polkit est bibliothèque sur laquelle a été découvert cette vulnérabilité. Il a été créé à la base pour permettre aux dévelopeurs de réaliser des actions qui nécessitaient des privilèges élevés sur le système. On peut le comparer à sudo qui fait essentiellement la même chose côté utilisateur.
    			\item Cette faille va s'intéresser à l'utilisation de la commande \textbf{pkexec} qui fait partie de la bibliothèque polkit. L'appel système pkexec est apparu en 2009 et inclus dans pratiquement toutes les distributions linux actuelles.
    			\item Cette faille de sécurité est présente depuis 12 ans et récemment mise en évidence par l'équipe de recherche Qualys en février 2022. \cite{qualys}
+   			\item Cette faille permet en n’importe quel attaquant qui possède un compte sur un système linux de devenir le root du système sans quasiment aucun effort.
    		\end{itemize}
-   		\subsection{Comment cela fonctionne ?}
+   		\subsection{Comment cela fonctionne ? (à compléter) }
+   		\begin{itemize}
+   			\item \textbf{pkexec} est une commande commme les autres, on peut lui passer des arguments
+   			\item Mais il y a un gros problème dans la façon dont il va être implémentée, si l'argument argc est à la valeur NULL, le fonctionnement de pkexec va être déréglé. 
+   			\item En manipulant des variables d'environnements et en créant des dossiers qui portent le même nom que ce qu'on va inscrire dans les variables d'environnement. Il est possible de charger un bout de code à un endroit contrôlé par l'attaquant. 
+   		\end{itemize}
    		
    		\subsection{Démonstration}
-			\subsubsection{Le code C}   		
+			\subsubsection{Le code C (à modifier) }   		
 			\lstinputlisting{Code/exploit.c}
+			
+			\newpage
 			\subsubsection{Script qui permet d'exécuter la faille}   	
 			\lstinputlisting{Code/Demo}
-			\subsubsection{Le script qui permet d'exploiter cette faille}   		
 
    \section{Modifier le mot de passe administrateur sans le connaître}
         \subsection{chroot}
@@ -87,7 +91,6 @@
    \section{Bombe zip}
    		\subsection{Qu'est-ce qu'une zip bomb ?}
          Une zip bomb est un fichier compressé de quelques MO qui contient énormément de données présente sous formes d'octets, ce qui va amener à saturer le disque dur. Le système va manquer de mémoire et se bloquer dans le processus
-   \section{Conclusion}
 
 	\bibliography{bibliozq}
 	\bibliographystyle{plain}
