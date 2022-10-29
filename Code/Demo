@@ -1,0 +1,22 @@
+#!/bin/bash
+#NOM    : Demo
+#OBJET  : réservé au makefile
+#AUTEUR	: Antoine Ghigny - 563459
+clear
+C='\033[44m'
+E='\033[32m\033[1m'
+W='\033[31m\033[1m'
+N='\033[0m'
+clear
+echo "Démonstration de la faille de sécurité permettant de passer en root"
+echo "----------------------------------------"
+echo -e "${C}             --> Enter pour continuer${N}"
+read
+sleep 1
+echo -e "${E}Vous êtes actuellement l'utilisateur : ${N}"
+echo
+id
+echo
+echo -e "${E}Exécution du programme : ${N}"
+echo
+./exploit

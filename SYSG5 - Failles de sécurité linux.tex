@@ -1,0 +1,94 @@
+\documentclass[a4paper, 12pt]{article}
+
+
+
+
+\makeatletter
+\title{SYSG5 : Exploitation de failles de sécurité LINUX}
+\let\Title\@title
+\author{Antoine Ghigny - 56359}          \let\Author\@author
+\date{29/10/2022}           \let\Date\@date
+\makeatother
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+
+\usepackage{titling}
+
+\usepackage[a4paper,
+            bindingoffset=0.2in,
+            left=1in,
+            right=1in,
+            top=1in,
+            bottom=1in,
+            footskip=.25in]{geometry}
+            
+\usepackage{blindtext}
+
+\usepackage{graphicx,color, caption2}
+\usepackage{epsfig}
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\usepackage{listings}
+\usepackage{color}
+\usepackage{makeidx}
+
+% Valeurs par défaut le lstset
+\lstset{language={},%C,Assembleur, TeX, tcl, basic, cobol, fortran, logo, make, pascal, perl, prolog, {}
+	literate={â}{{\^a}}1 {ê}{{\^e}}1 {î}{{\^i}}1 {ô}{{\^o}}1 {û}{{\^u}}1
+		 {ä}{{\"a}}1 {ë}{{\"e}}1 {ï}{{\"i}}1 {ö}{{\"o}}1 {ü}{{\"u}}1
+		 {à}{{\`a}}1 {é}{{\'e}}1 {è}{{\`e}}1 {ù}{{\`u}}1 
+		 {Â}{{\^A}}1 {Ê}{{\^E}}1 {Î}{{\^I}}1 {Ô}{{\^O}}1 {Û}{{\^U}}1
+		 {Ä}{{\"A}}1 {Ë}{{\"E}}1 {Ï}{{\"I}}1 {Ö}{{\"O}}1 {Ü}{{\"U}}1
+		 {À}{{\`A}}1 {É}{{\'E}}1 {È}{{\`E}}1 {Ù}{{\`U}}1,
+	commentstyle=\scriptsize\ttfamily\slshape, % style des commentaires
+	basicstyle=\scriptsize\ttfamily, % style par défaut
+	keywordstyle=\scriptsize\rmfamily\bfseries,% style des mots-clés
+	backgroundcolor=\color[rgb]{.95,.95,.95}, % couleur de fond : gris clair
+	framerule=0.5pt,% Taille des bords
+	frame=trbl,% Style du cadre
+	frameround=tttt, % Bords arrondis 
+	tabsize=3, % Taille des tabulations
+%	extendedchars=\true, % Incompatible avec utf8 et literate
+	inputencoding=utf8,
+	showspaces=false, % Ne montre pas les espaces 
+	showstringspaces=false, % Ne montre pas les espaces entre ''
+	xrightmargin=-1cm, % Retrait gauche 
+	xleftmargin=-1cm, % Retrait droit
+	escapechar=°}  % Caractère d'échappement, permet des commandes latex dans la source
+
+
+\begin{document}
+\maketitle 
+
+   \tableofcontents
+
+   \section{Dépassement de mémoire : Pwnkit}
+   		\subsection{Quel est le principe de cette faille ?}
+   		
+		\subsection{Origine de la faille}   		
+   		\begin{itemize}
+			\item 	Polkit est bibliothèque sur laquelle a été découvert cette vulnérabilité. Il a été créé à la base pour permettre aux dévelopeurs de réaliser des actions qui nécessitaient des privilèges élevés sur le système. On peut le comparer à sudo qui fait essentiellement la même chose côté utilisateur.
+   			\item Cette faille va s'intéresser à l'utilisation de la commande \textbf{pkexec} qui fait partie de la bibliothèque polkit. L'appel système pkexec est apparu en 2009 et inclus dans pratiquement toutes les distributions linux actuelles.
+   			\item Cette faille de sécurité est présente depuis 12 ans et récemment mise en évidence par l'équipe de recherche Qualys en février 2022. \cite{qualys}
+   		\end{itemize}
+   		\subsection{Comment cela fonctionne ?}
+   		
+   		\subsection{Démonstration}
+			\subsubsection{Le code C}   		
+			\lstinputlisting{Code/exploit.c}
+			\subsubsection{Script qui permet d'exécuter la faille}   	
+			\lstinputlisting{Code/Demo}
+			\subsubsection{Le script qui permet d'exploiter cette faille}   		
+
+   \section{Modifier le mot de passe administrateur sans le connaître}
+        \subsection{chroot}
+        \subsection{grub}
+   \section{Bombe zip}
+   		\subsection{Qu'est-ce qu'une zip bomb ?}
+         Une zip bomb est un fichier compressé de quelques MO qui contient énormément de données présente sous formes d'octets, ce qui va amener à saturer le disque dur. Le système va manquer de mémoire et se bloquer dans le processus
+   \section{Conclusion}
+
+	\bibliography{bibliozq}
+	\bibliographystyle{plain}
+\end{document}
