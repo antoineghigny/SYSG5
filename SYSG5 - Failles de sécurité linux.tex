@@ -1,7 +1,9 @@
 \documentclass[a4paper, 12pt]{article}
 
 
-
+\usepackage[utf8]{inputenc}
+\usepackage[francais]{babel}
+\usepackage[T1]{fontenc}
 
 \makeatletter
 \title{SYSG5 : Exploitation de failles de sécurité LINUX}
@@ -9,9 +11,6 @@
 \author{Antoine Ghigny - 56359}          \let\Author\@author
 \date{29/10/2022}           \let\Date\@date
 \makeatother
-
-\usepackage[utf8]{inputenc}
-\usepackage[T1]{fontenc}
 
 \usepackage{titling}
 
@@ -52,8 +51,6 @@
 	inputencoding=utf8,
 	showspaces=false, % Ne montre pas les espaces 
 	showstringspaces=false, % Ne montre pas les espaces entre ''
-	xrightmargin=-1cm, % Retrait gauche 
-	xleftmargin=-1cm, % Retrait droit
 	escapechar=°}  % Caractère d'échappement, permet des commandes latex dans la source
 
 \begin{document}
@@ -67,18 +64,18 @@
 			\noindent 	Polkit est bibliothèque sur laquelle a été découvert cette vulnérabilité. Il a été créé à la base pour permettre aux dévelopeurs de réaliser des actions qui nécessitaient des privilèges élevés sur le système. On peut le comparer à sudo qui fait essentiellement la même chose côté utilisateur.
    			\item Cette faille va s'intéresser à l'utilisation de la commande \textbf{pkexec} qui fait partie de la bibliothèque polkit. L'appel système pkexec est apparu en 2009 et inclus dans pratiquement toutes les distributions linux actuelles.
    			\item Cette faille de sécurité est présente depuis 12 ans et récemment mise en évidence par l'équipe de recherche Qualys en février 2022. \cite{qualys}
-   			\item Cette faille permet en n’importe quel attaquant qui possède un compte sur un système linux de devenir le root du système sans quasiment aucun effort.
+   			\item Cette faille permet à n’importe quel attaquant qui possède un compte sur un système linux de devenir le root du système sans quasiment aucun effort.
    		\end{flushleft}
    		\subsection{Comment cela fonctionne ? (à modifier) }
    		\begin{flushleft}
-   			\noindent \textbf{pkexec} est une commande commme les autres, on peut lui passer des arguments
+   			\noindent \textbf{pkexec} est une commande comme les autres, on peut lui passer des arguments
    			\item Mais il y a un gros problème dans la façon dont il va être implémentée, si l'argument argc est à la valeur NULL, le fonctionnement de pkexec va être déréglé. 
    			\item En manipulant des variables d'environnements et en créant des dossiers qui portent le même nom que ce qu'on va inscrire dans les variables d'environnement. Il est possible de charger un bout de code à un endroit contrôlé par l'attaquant. 
    		\end{flushleft}
    		
-   		\subsection{Détails tecniques sur la faille (à compléter) }
+   		\subsection{Détails techniques sur la faille (à compléter) }
    		\begin{flushleft}
-   			\noindent Le début de la fonction main() de pkexec traite les arguments de ligne de commande (lignes 534-568), et recherche le programme à exécuter, si son chemin n’est pas absolu, dans les répertoires de la variable d’environnement PATH (lignes 610-640) :
+   			\noindent Le début de la fonction main() de pkexec traite les arguments de ligne de commande (lignes 534-568), et recherche le programme à exécuter, si son chemin n’est pas absolu, dans les répertoires de la variable d'environnement PATH (lignes 610-640) :
    			\begin{lstlisting}
 435 	main (int argc, char *argv[])
 436 	{
@@ -117,8 +114,7 @@ pkexec --version
    		
    		\newpage
    		\subsection{Démonstration}
-			\subsubsection{Le code C (à modifier) }   		
-			
+			\subsubsection{Le code C (à modifier) } 
 			\lstinputlisting{Code/exploit.c}  
 				
 			\subsubsection{Script qui permet d'exécuter la faille}   	
@@ -132,16 +128,16 @@ pkexec --version
         	\item \textbf{Eteindre le pc} et après avoir rallumé l'ordinateur, ouvrir les options avancées et \textbf{ouvrir Grub}. Il s'agit d'un programme d'ammorçage du chargement d'un système d'exploitation. C'est ce qui fait le lien entre le bios et le système d'exploitation. Avant que le système ne soit chargé ou lancé.
         	\item Entrer en mode édition via la touche 'E'. Dans le menu GRUB, recherchez la ligne du noyau commençant par linux /boot/ et ajoutez cette ligne
         	\begin{lstlisting}
-        		init=/bin/bash
+init=/bin/bash
         	\end{lstlisting}
         	\item Sauvegardez les changements via en appuyant sur \textbf{CTRL + X} et rebooter en mode single-user mode.
         	\item Dans le terminal, indiquez la ligne
         	\begin{lstlisting}
-        		mount -o remount,rw /
+mount -o remount,rw /
         	\end{lstlisting}
         	\item Une fois cela fait, vous pouvez modifier le password administrateur via cette la commande ci-dessous, vous n'aurez qu'à entrer le nouveau mot de passe et une autre fois pour confirmer. Il suffit de redémarrer le système et le password administrateur aura été modifié. 
         	\begin{lstlisting}
-        		passwd root
+passwd root
         	\end{lstlisting}
         \end{enumerate}
    \section{Bombe zip}
@@ -153,11 +149,11 @@ pkexec --version
 			\item Cela compresse 100 To de données dans un fichier d’environ 14,9 Mo. Ainsi, lorsque quelqu’un essaie de l’extraire, il devrait s’étendre à plus de 1300000x sa taille et leur disque dur devrait être rempli de caractères nuls!
 		
 			\begin{lstlisting}
-        		dd if=/dev/zero bs=10G count=10000 | bzip2 -c > zipBomb.bz2
+dd if=/dev/zero bs=10G count=10000 | bzip2 -c > zipBomb.bz2
         	\end{lstlisting}
         	\item Il suffit alors d'extraire le fichier via la commande suivante : 
         	\begin{lstlisting}
-        		bzip2 -d zipBomb.bz2
+bzip2 -d zipBomb.bz2
         	\end{lstlisting}
         \end{flushleft}
 	\bibliography{bibliozq}
