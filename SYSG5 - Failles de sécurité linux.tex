@@ -58,14 +58,83 @@
 
    \tableofcontents
 
-   \section{Dépassement de mémoire : Pwnkit}   		
+    \newpage
+   \section{Introduction}
+   \begin{flushleft}
+       \noindent Dans ce rapport, je vais détailler plusieurs failles découvertes autour de mes recherches. L'origine de ces failles, la raison de leurs existence. Le moyen de les exploiter mais également comment s'en protéger.
+       \item Je vais tout d'abord parler d'une faille permettant à n'importe quel utilisateur du système d'augmenter ses privilèges à ceux de root. Une faille présente depuis 12 ans et corrigée début 2022. 
+       \item Je vais ensuite expliquer comment modifier le mot de passe root depuis le grub sans le connaître. Pourquoi ce n'est pas sécurisé et commment s'en protéger. 
+       \item Je vais dans le cadre de ce cours du système introduire des concepts
+   \end{flushleft}
+
+   \section{Préparation}
+   \begin{flushleft}
+       \noindent Afin de pouvoir tester certaines failles qui ont été corrigées via des mises à jour. J'ai réalisé un l'environnement suivant. 
+       \item OS : 
+       \begin{itemize}
+           \item  Debian 10
+           \item Image: \href{https://cdimage.debian.org/mirror/cdimage/archive/10.7.0/amd64/iso-dvd/debian-10.7.0-amd64-DVD-1.iso}{debian-10.7.0-amd64-DVD-1.iso } \cite{CVE2021350:online}
+           \item System info: Linux debian 4.19.0-14-amd64 \#1
+       \end{itemize}
+       \item SUDO : 
+       \begin{itemize}
+           \item Package version: 1.8.27-1+deb10u2
+           \item Checksum (sha256): ca4a94e0a49f59295df5522d896022444cbbafdec4d94326c1a7f333fd030038
+           \item Source code: \href{https://www.sudo.ws/dist/sudo-1.8.27.tar.gz}{sudo-1.8.27.tar.gz} \cite{CVE2021350:online}
+       \end{itemize}
+       \item Pour configurer le réseau avec celui de l'école j'ai encodé les éléments suivant
+       \begin{itemize}
+           \item IP : 10.0.255.20
+           \item Gateway : 10.0.255.115
+           \item DNS : 195.238.2.21 195.238.2.21 8.8.8.8
+       \end{itemize}
+       \item Les partitions à paramètrer ont été les suivantes : 
+       \begin{itemize}
+           \item 1 : Changer la partition de fat16 à EFI
+           \item 2 : biosgrub
+           \item 5 : swap
+           \item 6 : 15 GB : / 
+           \item 7 : 10 GB : /home
+           \item 8 : 10GB : /usr 
+       \end{itemize}
+
+       \item Et enfin j'ai ajouté l'utilisateur au groupe sudo comme c'est généralement le cas sur un environnement linux.
+       \begin{lstlisting}
+su -
+addgroup user sudo
+sudo apt-get update
+       \end{lstlisting}
+       \item Afin de pouvoir installer des packets, il faudra update pour télécharger les informations des packages des sources configurées.
+       \item Pour cela, accédez en écriture au fichier \textbf{/etc/apt/sources.list}
+       \item Mettez en commentaire la ligne concernant le cdrom installé [Debian GNU/Linux...]
+       \item Ajoutez au fichier les 2 lignes suivantes : 
+       \begin{lstlisting}
+deb http://deb.debian.org/ buster-updates main contrib
+deb-src http://ftp.debian.org/debian/ buster main contrib
+       \end{lstlisting}
+    \item Enfin, sauvez le fichier et mettez téléchargez les packets via la commande suivante
+    \begin{lstlisting}
+sudo apt-get update
+    \end{lstlisting}
+    \item Votre environnement de développement est maintenant prêt.
+   \end{flushleft}
+
+   \section{Privilege Escalation : Pwnkit}   		
 		\subsection{Origine de la faille}   
    		\begin{flushleft}
 			\noindent 	Polkit est bibliothèque sur laquelle a été découvert cette vulnérabilité. Il a été créé à la base pour permettre aux dévelopeurs de réaliser des actions qui nécessitaient des privilèges élevés sur le système. On peut le comparer à sudo qui fait essentiellement la même chose côté utilisateur.
    			\item Cette faille va s'intéresser à l'utilisation de la commande \textbf{pkexec} qui fait partie de la bibliothèque polkit. L'appel système pkexec est apparu en 2009 et inclus dans pratiquement toutes les distributions linux actuelles.
    			\item Cette faille de sécurité est présente depuis 12 ans et récemment mise en évidence par l'équipe de recherche Qualys en février 2022. \cite{qualys}
-   			\item Cette faille permet à n’importe quel attaquant qui possède un compte sur un système linux de devenir le root du système sans quasiment aucun effort.
+   			\item Cette faille permet à n’importe quel attaquant qui possède un compte sur un système linux de devenir le root du système.
    		\end{flushleft}
+            \subsection{Les appels systèmes utilisés dans le cadre de ce programme}
+            \begin{itemize}
+                \item \textbf{pkexec} C'est un progrramme utilisé à exécuter un programme en tant qu'un autre utilisateur. Si l'utilisateur n'est pas spécifié, le programme sera exécuté en mode root. \cite{pkexec1E89:online}
+                \item \textbf{setuid}  \cite{setuid2L92:online}
+                \item \textbf{seteuid} \cite{seteuid224:online}
+                \item 
+            \end{itemize}
+                 
    		\subsection{Comment cela fonctionne ? (à modifier) }
    		\begin{flushleft}
    			\noindent \textbf{pkexec} est une commande comme les autres, on peut lui passer des arguments
@@ -123,10 +192,11 @@ pkexec --version
 		Cette faille a été corrigée dans la version 0.105 de pkexec.
 
    \section{Modifier le mot de passe administrateur sans le connaître}
-        \subsection{grub}
+        
+        \subsection{Démonstration : GRUB}
         \begin{enumerate}
         	\item \textbf{Eteindre le pc} et après avoir rallumé l'ordinateur, ouvrir les options avancées et \textbf{ouvrir Grub}. Il s'agit d'un programme d'ammorçage du chargement d'un système d'exploitation. C'est ce qui fait le lien entre le bios et le système d'exploitation. Avant que le système ne soit chargé ou lancé.
-        	\item Entrer en mode édition via la touche 'E'. Dans le menu GRUB, recherchez la ligne du noyau commençant par linux /boot/ et ajoutez cette ligne
+        	\item Entrer en mode édition via la touche 'E'. Dans le menu GRUB, recherchez la ligne du noyau commençant par linux /boot/ et ajoutez cette ligne à la fin.
         	\begin{lstlisting}
 init=/bin/bash
         	\end{lstlisting}
@@ -140,10 +210,28 @@ mount -o remount,rw /
 passwd root
         	\end{lstlisting}
         \end{enumerate}
+   \subsection{Pourquoi ça fonctionne ainsi ? Pourquoi est-il si simple de changer le mot de passe administrateur ?} 
+   \begin{flushleft}
+       \noindent Les mots de passe sont destinés à empêcher l'accès de l'extérieur (réseau, Internet), et ils le font. Cependant, l'accès physique est un accès root.
+       \item À moins que vous ne cryptiez l'intégralité de votre partition, il est toujours possible de démarrer à partir d'un disque optique ou d'un lecteur flash et d'accéder à tous vos fichiers. De cette façon, vous pouvez également modifier les fichiers qui stockent les mots de passe des utilisateurs.
+       \item Donc si quelqu'un peut toucher à votre machine, il peut y entrer.
+   \end{flushleft}
+
+   \subsection{Comment protéger le grub pour ne plus que cette faille soit possible} 
+   \begin{flushleft}
+       \noindent Il est possible d'ajouter un mot de passe à grub.
+       \item Un mot de passe sera alors requis pour modifier les entrées du menu mais pas pour démarrer les entrées de menu existantes. 
+       \item Pour cela, créez un mot de passe avec la commande suivante. Vous aurez à entrer un mot de passe, confirmer et ne surtout pas oublier le mot de passe que vous avez encodé.
+       \begin{lstlisting}
+grub2-setpassword
+       \end{lstlisting}
+       \item Cette commande créera ou mettra à jour le contenu de \textbf{/boot/grub2/user.cfg} avec le mot de passe hashé. \cite{Howtopro9:online}
+       
+   \end{flushleft}
    \section{Bombe zip}
    		\subsection{Qu'est-ce qu'une zip bomb ?}
          Une zip bomb est un fichier compressé de quelques MO qui contient énormément de données présente sous formes d'octets, ce qui va amener à saturer le disque dur. Le système va manquer de mémoire et se bloquer dans le processus.
-		\subsection{Comment faire une zip bomb ?}
+		\subsection{Démonstration : Comment faire une zip bomb ?}
 		\begin{flushleft}
 			\noindent Entrez cette commande dans le terminal. 
 			\item Cela compresse 100 To de données dans un fichier d’environ 14,9 Mo. Ainsi, lorsque quelqu’un essaie de l’extraire, il devrait s’étendre à plus de 1300000x sa taille et leur disque dur devrait être rempli de caractères nuls!
@@ -156,6 +244,9 @@ dd if=/dev/zero bs=10G count=10000 | bzip2 -c > zipBomb.bz2
 bzip2 -d zipBomb.bz2
         	\end{lstlisting}
         \end{flushleft}
+
+    \section{Conclusion}
+        \nocite{*}
 	\bibliography{bibliozq}
 	\bibliographystyle{plain}
 \end{document}
