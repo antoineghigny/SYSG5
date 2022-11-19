@@ -30,6 +30,7 @@
 \usepackage{listings}
 \usepackage{color}
 \usepackage{makeidx}
+\usepackage{verbatim}
 
 % Valeurs par défaut le lstset
 \lstset{language={},%C,Assembleur, TeX, tcl, basic, cobol, fortran, logo, make, pascal, perl, prolog, {}
@@ -68,7 +69,8 @@
    \end{flushleft}
 
    \section{Préparation}
-   \begin{flushleft}
+    \subsection{Installation de l'image disque}
+    \begin{flushleft}
        \noindent Afin de pouvoir tester certaines failles qui ont été corrigées via des mises à jour. J'ai réalisé un l'environnement suivant. 
        \item OS : 
        \begin{itemize}
@@ -82,12 +84,41 @@
            \item Checksum (sha256): ca4a94e0a49f59295df5522d896022444cbbafdec4d94326c1a7f333fd030038
            \item Source code: \href{https://www.sudo.ws/dist/sudo-1.8.27.tar.gz}{sudo-1.8.27.tar.gz} \cite{CVE2021350:online}
        \end{itemize}
+
+       \subsection{Vérification de la copie (à modifier)}
+       \item Il est important de vérifier l’intégrité et l’authenticité de votre image ISO.
+       \item Le test d’intégrité confirme que votre image ISO a été proprement téléchargée et qu’elle est une copie exacte du fichier présent sur le miroir de téléchargement. Une erreur pendant le téléchargement peut corrompre l’image et engendrer des problèmes aléatoires pendant l’installation.
+       \item Pour vérifier l’intégrité de votre image ISO, générez sa somme de hachage SHA256 et comparez la à la somme qu'il devrait avoir : \textbf{ca4a94e0a49f59295df5522d896022444cbbafdec4d94326c1a7f333fd030038}
+        \begin{lstlisting}
+sha256sum -b debian-10.7.0-amd64-DVD-1.iso
+        \end{lstlisting}
+        \item Sil les sommes correspondent, votre image ISO a été proprement téléchargée. Sinon téléchargez la à nouveau. 
+       
+       \subsection{Création d'un stick USB bootable}
+       \item Munissez-vous d'une clé USB, branchez-là sur un ordinateur.
+       \item Placez le stick USB, attendez une seconde et tapez la commande \textbf{dmesg}
+       \item Les dernières lignes affichées de cette commande vous donnent le nom du pilote associé au stick (sdb,
+sdc, sdd, ...), par exemple sdb.
+        \item Une fois l'image disque installée et votre nom du pilote associé au stick usb récupéré. 
+        \item Entrez la commande suivante : 
+        \begin{itemize}
+            \item \textbf{Downloads/debian-10.7.0-amd64-DVD-1.iso} correspond au chemin où se situe l'image disque téléchargée plus tôt. 
+            \item \textbf{/dev/sdb} correspond quant à lui au nom du pilote asocié à votre disque. : 
+        \end{itemize}
+        \begin{lstlisting}
+sudo dd bs=4M if=Downloads/debian-10.7.0-amd64-DVD-1.iso of=/dev/sdb conv=fdatasync
+        \end{lstlisting}
+        
+
+       \subsection{Configuration du réseau}
        \item Pour configurer le réseau avec celui de l'école j'ai encodé les éléments suivant
        \begin{itemize}
            \item IP : 10.0.255.20
            \item Gateway : 10.0.255.115
+           \item Masque de sous réseau : 255.255.255.0
            \item DNS : 195.238.2.21 195.238.2.21 8.8.8.8
        \end{itemize}
+       \subsection{Partitions à paramètrer}
        \item Les partitions à paramètrer ont été les suivantes : 
        \begin{itemize}
            \item 1 : Changer la partition de fat16 à EFI
@@ -97,7 +128,7 @@
            \item 7 : 10 GB : /home
            \item 8 : 10GB : /usr 
        \end{itemize}
-
+       \subsection{Configuration de l'environnement de travail}
        \item Et enfin j'ai ajouté l'utilisateur au groupe sudo comme c'est généralement le cas sur un environnement linux.
        \begin{lstlisting}
 su -
@@ -126,16 +157,10 @@ sudo apt-get update
    			\item Cette faille va s'intéresser à l'utilisation de la commande \textbf{pkexec} qui fait partie de la bibliothèque polkit. L'appel système pkexec est apparu en 2009 et inclus dans pratiquement toutes les distributions linux actuelles.
    			\item Cette faille de sécurité est présente depuis 12 ans et récemment mise en évidence par l'équipe de recherche Qualys en février 2022. \cite{qualys}
    			\item Cette faille permet à n’importe quel attaquant qui possède un compte sur un système linux de devenir le root du système.
+            \subsection{A quoi sert la bibliothèque Polkit et en particulier l'appel système pkexec ? }
+            \subsubsection{Quel est l'utilisation normale de l'appel système pkexec ? (à modifier)}
    		\end{flushleft}
-            \subsection{Les appels systèmes utilisés dans le cadre de ce programme}
-            \begin{itemize}
-                \item \textbf{pkexec} C'est un progrramme utilisé à exécuter un programme en tant qu'un autre utilisateur. Si l'utilisateur n'est pas spécifié, le programme sera exécuté en mode root. \cite{pkexec1E89:online}
-                \item \textbf{setuid}  \cite{setuid2L92:online}
-                \item \textbf{seteuid} \cite{seteuid224:online}
-                \item 
-            \end{itemize}
-                 
-   		\subsection{Comment cela fonctionne ? (à modifier) }
+   		\subsection{Comment la faille fonctionne-elle ? (à modifier) }
    		\begin{flushleft}
    			\noindent \textbf{pkexec} est une commande comme les autres, on peut lui passer des arguments
    			\item Mais il y a un gros problème dans la façon dont il va être implémentée, si l'argument argc est à la valeur NULL, le fonctionnement de pkexec va être déréglé. 
@@ -184,12 +209,13 @@ pkexec --version
    		\newpage
    		\subsection{Démonstration}
 			\subsubsection{Le code C (à modifier) } 
-			\lstinputlisting{../Code/PwnKit/exploit.c}  
+			\lstinputlisting{../Code/exploit.c}  
 				
 			\subsubsection{Script qui permet d'exécuter la faille}   	
-			\lstinputlisting{../Code/PwnKit/Demo}
+			\lstinputlisting{../Code/Demo}
 		\subsection{Comment a été corrigée cette faille (à modifier)}
 		Cette faille a été corrigée dans la version 0.105 de pkexec.
+            \subsection{Comment corriger cette faille si il n'est pas possible d'ugrade la version de pkexec ? (à modifier)}
 
    \section{Modifier le mot de passe administrateur sans le connaître}
         
