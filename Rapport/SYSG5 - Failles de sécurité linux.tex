@@ -8,8 +8,8 @@
 \makeatletter
 \title{SYSG5 : Exploitation de failles de sécurité LINUX}
 \let\Title\@title
-\author{Antoine Ghigny - 56359}          \let\Author\@author
-\date{29/10/2022}           \let\Date\@date
+\author{Antoine Ghigny - 56359 - E12}          \let\Author\@author
+\date{19/11/2022}           \let\Date\@date
 \makeatother
 
 \usepackage{titling}
@@ -56,16 +56,16 @@
 
 \begin{document}
 \maketitle 
-
+   \newpage
    \tableofcontents
 
-    \newpage
-   \section{Introduction}
+	\newpage
+   \section{Introduction (à modifier)}
    \begin{flushleft}
        \noindent Dans ce rapport, je vais détailler plusieurs failles découvertes autour de mes recherches. L'origine de ces failles, la raison de leurs existence. Le moyen de les exploiter mais également comment s'en protéger.
        \item Je vais tout d'abord parler d'une faille permettant à n'importe quel utilisateur du système d'augmenter ses privilèges à ceux de root. Une faille présente depuis 12 ans et corrigée début 2022. 
        \item Je vais ensuite expliquer comment modifier le mot de passe root depuis le grub sans le connaître. Pourquoi ce n'est pas sécurisé et commment s'en protéger. 
-       \item Je vais dans le cadre de ce cours du système introduire des concepts
+       \item Je vais dans le cadre de ce cours du système introduire des concepts (à modifier)
    \end{flushleft}
 
    \section{Préparation}
@@ -85,7 +85,7 @@
            \item Source code: \href{https://www.sudo.ws/dist/sudo-1.8.27.tar.gz}{sudo-1.8.27.tar.gz} \cite{CVE2021350:online}
        \end{itemize}
 
-       \subsection{Vérification de la copie (à modifier)}
+       \subsection{Vérification de la copie}
        \item Il est important de vérifier l’intégrité et l’authenticité de votre image ISO.
        \item Le test d’intégrité confirme que votre image ISO a été proprement téléchargée et qu’elle est une copie exacte du fichier présent sur le miroir de téléchargement. Une erreur pendant le téléchargement peut corrompre l’image et engendrer des problèmes aléatoires pendant l’installation.
        \item Pour vérifier l’intégrité de votre image ISO, générez sa somme de hachage SHA256 et comparez la à la somme qu'il devrait avoir : \textbf{ca4a94e0a49f59295df5522d896022444cbbafdec4d94326c1a7f333fd030038}
@@ -118,7 +118,7 @@ sudo dd bs=4M if=Downloads/debian-10.7.0-amd64-DVD-1.iso of=/dev/sdb conv=fdatas
            \item Masque de sous réseau : 255.255.255.0
            \item DNS : 195.238.2.21 195.238.2.21 8.8.8.8
        \end{itemize}
-       \subsection{Partitions à paramètrer}
+       \subsection{Configuration des partitions}
        \item Les partitions à paramètrer ont été les suivantes : 
        \begin{itemize}
            \item 1 : Changer la partition de fat16 à EFI
@@ -153,12 +153,39 @@ sudo apt-get update
    \section{Privilege Escalation : Pwnkit}   		
 		\subsection{Origine de la faille}   
    		\begin{flushleft}
-			\noindent 	Polkit est bibliothèque sur laquelle a été découvert cette vulnérabilité. Il a été créé à la base pour permettre aux dévelopeurs de réaliser des actions qui nécessitaient des privilèges élevés sur le système. On peut le comparer à sudo qui fait essentiellement la même chose côté utilisateur.
-   			\item Cette faille va s'intéresser à l'utilisation de la commande \textbf{pkexec} qui fait partie de la bibliothèque polkit. L'appel système pkexec est apparu en 2009 et inclus dans pratiquement toutes les distributions linux actuelles.
+   			\noindent Cette faille va s'intéresser à l'utilisation de la commande \textbf{pkexec} qui fait partie de la bibliothèque polkit. L'appel système pkexec est apparu en 2009 et inclus dans pratiquement toutes les distributions linux actuelles.
    			\item Cette faille de sécurité est présente depuis 12 ans et récemment mise en évidence par l'équipe de recherche Qualys en février 2022. \cite{qualys}
    			\item Cette faille permet à n’importe quel attaquant qui possède un compte sur un système linux de devenir le root du système.
             \subsection{A quoi sert la bibliothèque Polkit et en particulier l'appel système pkexec ? }
-            \subsubsection{Quel est l'utilisation normale de l'appel système pkexec ? (à modifier)}
+            \begin{flushleft}
+                \noindent Polkit (anciennement PolicyKit) est une bibliothèque logicielle libre permettant aux applications s'exécutant avec des droits restreints d'interagir avec des services privilégiés du système. À la différence d'autres méthodes permettant une élévation des privilèges comme sudo, le processus ne se voit pas attribuer les droits superutilisateur, ce qui permet un contrôle fin au niveau du système de ce que peuvent faire ou non les utilisateurs. \cite{policyki47:online}
+                \item C'est un logiciel moderne actuellement privilégié par les développeurs d'environnements graphiques grâce à la sécurité qu'il fournit, en effet il fonctionne selon le principe suivant : 
+                \item Un programme (démon) s'exécute en arrière-plan (sans fenêtre), et dispose des droits root.
+                \item Les applications sont invitées à lui demander les droits nécessaires pour effectuer des opérations spécifiques.
+                \item PolKit saura quoi répondre en fonction des "policy" paramétrées (des configurations qui définissent qui peut faire quoi, et quel logiciel a besoin de quels privilèges).
+                \item Polkit est intégré aux distributions Ubuntu (depuis la version 8.04), Fedora (depuis la version 8), Mandriva (depuis la version 2008.1) et OpenSUSE (depuis la version 10.3).
+                \subsubsection{Utilisation des "policy"}
+                \begin{flushleft}
+                    \noindent Pour gérer les règles il faut donc éditer les fichiers de configuration avec les droits d'administration. La configuration se fait avec des règles et des actions :
+                    \begin{itemize}
+                        \item Les Actions sont définies dans des fichiers XML .policy situés dans \textbf{/usr/share/polkit-1/actions} 
+                        \item Les règles d'autorisation sont définies dans les fichiers .rules JavaScript. On les trouve à deux endroits : \cite{PartVMan11:online}
+                        \begin{itemize}
+                            \item \textbf{/usr/share/polkit-1/rules.d} pour les paquets tiers peuvent utiliser (bien que peu, voire aucun, ne le fasse)
+                            \item \textbf{/etc/polkit-1/rules.d} pour la configuration locale.
+                        \end{itemize}
+                    \end{itemize}
+                \end{flushleft}
+                \subsubsection{Utilisation classique de l'appel système pkexec (à modifier)}
+                \subsubsection{Quelle est la différence entre pkexec et sudo ?}
+                \begin{flushleft}
+                    \noindent Dans le concept, ils font la même chose, permettant à un utilisateur d'exécuter un autre programme en tant qu'autre utilisateur
+                    \item Sudo et son frère aîné su, vous donnent un contrôle total sur tout.
+                    \item Pkexec fait partie d'un système d'outils plus vaste appelé Polkit. Cela prend un peu de temps pour le configurer, mais une fois sur place, il donne un contrôle beaucoup plus fin.
+                    \item C'est une bonne idée pour s'isoler de certains dangers et avoir l'accès complet à tout dans le système.
+                \end{flushleft}
+            
+            \end{flushleft}
    		\end{flushleft}
    		\subsection{Comment la faille fonctionne-elle ? (à modifier) }
    		\begin{flushleft}
@@ -204,9 +231,6 @@ sudo apt-get update
 \begin{lstlisting}
 pkexec --version
 \end{lstlisting}
-
-   		
-   		\newpage
    		\subsection{Démonstration}
 			\subsubsection{Le code C (à modifier) } 
 			\lstinputlisting{../Code/exploit.c}  
