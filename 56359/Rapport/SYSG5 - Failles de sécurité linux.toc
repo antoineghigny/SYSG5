@@ -1,0 +1,41 @@
+\babel@toc {french}{}\relax 
+\contentsline {section}{\numberline {1}Introduction (à modifier)}{3}{section.1}%
+\contentsline {section}{\numberline {2}Préparation de l'environnement}{3}{section.2}%
+\contentsline {subsection}{\numberline {2.1}Installation de l'image disque}{3}{subsection.2.1}%
+\contentsline {subsection}{\numberline {2.2}Vérification de la copie}{3}{subsection.2.2}%
+\contentsline {subsection}{\numberline {2.3}Création d'un stick USB}{4}{subsection.2.3}%
+\contentsline {subsection}{\numberline {2.4}Configuration du réseau}{4}{subsection.2.4}%
+\contentsline {subsection}{\numberline {2.5}Configuration des partitions}{4}{subsection.2.5}%
+\contentsline {subsection}{\numberline {2.6}Configuration de l'environnement de travail}{4}{subsection.2.6}%
+\contentsline {subsubsection}{\numberline {2.6.1}Installation des packets requis}{4}{subsubsection.2.6.1}%
+\contentsline {section}{\numberline {3}Privilege Escalation : Pwnkit}{6}{section.3}%
+\contentsline {subsection}{\numberline {3.1}Origine de la faille}{6}{subsection.3.1}%
+\contentsline {subsection}{\numberline {3.2}A quoi sert la bibliothèque Polkit et en particulier l'appel système pkexec ? }{6}{subsection.3.2}%
+\contentsline {subsubsection}{\numberline {3.2.1}Utilisation des "policy"}{6}{subsubsection.3.2.1}%
+\contentsline {subsubsection}{\numberline {3.2.2}Utilisation classique de l'appel système pkexec (à modifier)}{7}{subsubsection.3.2.2}%
+\contentsline {subsubsection}{\numberline {3.2.3}Quelle est la différence entre pkexec et sudo ?}{7}{subsubsection.3.2.3}%
+\contentsline {subsection}{\numberline {3.3}Comment la faille fonctionne-elle ? (à modifier) }{7}{subsection.3.3}%
+\contentsline {subsection}{\numberline {3.4}Détails techniques sur la faille (à compléter) }{7}{subsection.3.4}%
+\contentsline {subsubsection}{\numberline {3.4.1}Ce que fait la faille}{7}{subsubsection.3.4.1}%
+\contentsline {subsubsection}{\numberline {3.4.2}Contexte et concepts à connaître}{8}{subsubsection.3.4.2}%
+\contentsline {subsubsection}{\numberline {3.4.3}Explication ligne par ligne, pourquoi une écriture hors limite est provoquée et d'où provient la faille dans le code source de pkexec}{9}{subsubsection.3.4.3}%
+\contentsline {subsubsection}{\numberline {3.4.4}Ajout du code malicieux via notre environnement contrôlé}{11}{subsubsection.3.4.4}%
+\contentsline {subsubsection}{\numberline {3.4.5}En résumé : }{12}{subsubsection.3.4.5}%
+\contentsline {subsection}{\numberline {3.5}Comment savoir si la faille est exploitable sur le système ?}{13}{subsection.3.5}%
+\contentsline {subsection}{\numberline {3.6}Démonstration}{14}{subsection.3.6}%
+\contentsline {subsubsection}{\numberline {3.6.1}Le code C (à modifier) }{14}{subsubsection.3.6.1}%
+\contentsline {subsubsection}{\numberline {3.6.2}Ce fichier contiendra un code simple qui exécute un shell sous les privilèges root}{14}{subsubsection.3.6.2}%
+\contentsline {subsubsection}{\numberline {3.6.3}Le makefile qui s'occupe de créer les fichiers et répertoires et compile le programme}{14}{subsubsection.3.6.3}%
+\contentsline {subsubsection}{\numberline {3.6.4}Le script qui permet d'exécuter le programme et d'effectuer une Demo de la faille}{15}{subsubsection.3.6.4}%
+\contentsline {subsubsection}{\numberline {3.6.5}Script qui permet d'exécuter la faille}{15}{subsubsection.3.6.5}%
+\contentsline {subsection}{\numberline {3.7}Comment a été corrigée cette faille (à modifier)}{15}{subsection.3.7}%
+\contentsline {subsection}{\numberline {3.8}Comment corriger cette faille si il n'est pas possible d'ugrade la version de pkexec ? (à modifier)}{16}{subsection.3.8}%
+\contentsline {subsection}{\numberline {3.9}Est-il possible de vérifier les preuves d’exploitation?}{16}{subsection.3.9}%
+\contentsline {section}{\numberline {4}Modifier le mot de passe administrateur sans le connaître}{17}{section.4}%
+\contentsline {subsection}{\numberline {4.1}Démonstration : GRUB}{17}{subsection.4.1}%
+\contentsline {subsection}{\numberline {4.2}Pourquoi ça fonctionne ainsi ? Pourquoi est-il si simple de changer le mot de passe administrateur ?}{17}{subsection.4.2}%
+\contentsline {subsection}{\numberline {4.3}Comment protéger le grub pour ne plus que cette faille soit possible}{17}{subsection.4.3}%
+\contentsline {subsubsection}{\numberline {4.3.1}Ajouter un mot de passe à GRUB}{17}{subsubsection.4.3.1}%
+\contentsline {subsubsection}{\numberline {4.3.2}Désactiver le mode de récupération de votre choix}{18}{subsubsection.4.3.2}%
+\contentsline {subsubsection}{\numberline {4.3.3}Protéger le bootloader GRUB}{18}{subsubsection.4.3.3}%
+\contentsline {section}{\numberline {5}Conclusion}{19}{section.5}%

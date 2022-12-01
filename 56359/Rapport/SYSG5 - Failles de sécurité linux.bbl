@@ -1,0 +1,74 @@
+\begin{thebibliography}{10}
+
+\bibitem{10stepst56:online}
+10 steps to password protect suse's grub bootloader | suse communities.
+\newblock
+  \url{https://www.suse.com/c/10-steps-password-protect-suses-grub-bootloader/#:~:text=Steps%3A%201%20Log%20into%20your%20box%20as%20root,8%20Open%20up%20a%20new%20shell.%20%C3%89l%C3%A9ments%20suppl%C3%A9mentaires}.
+\newblock (Accessed on 12/01/2022).
+
+\bibitem{CVE2021350:online}
+[cve-2021-3156] exploiting sudo heap overflow on debian 10.
+\newblock
+  \url{https://syst3mfailure.io/sudo-heap-overflow#:~:text=Image%3A%20debian%2D10.7.0%2Damd64%2DDVD%2D1.iso}.
+\newblock (Accessed on 11/16/2022).
+
+\bibitem{securitytrack:online}
+Cve-2021-4034.
+\newblock \url{https://security-tracker.debian.org/tracker/CVE-2021-4034}.
+\newblock (Accessed on 11/30/2022).
+
+\bibitem{CVE2021425:online}
+Cve-2021-4034 : Présentation pas à pas de pwnkit : dernière | de la
+  vulnérabilité d’escalade des privilèges linux réparer.
+\newblock
+  \url{https://www.mend.io/resources/blog/polkit-pkexec-vulnerability-cve-2021-4034/}.
+\newblock (Accessed on 11/29/2022).
+
+\bibitem{Howtopro9:online}
+How to protect grub2 from booting kernel without password in linux |
+  golinuxcloud.
+\newblock
+  \url{https://www.golinuxcloud.com/protect-grub2-booting-kernel-without-password/}.
+\newblock (Accessed on 11/16/2022).
+
+\bibitem{grubchangepassword:online}
+Layerstack tutorials - layerstack - resetting root password by booting into
+  single user mode from linux grub.
+\newblock
+  \url{https://www.layerstack.com/resources/tutorials/Resetting-root-password-for-Linux-Cloud-Servers-by-booting-into-Single-User-Mode#:~:text=In%20the%20GRUB%20menu%2C%20find,the%20end%20of%20the%20line.&text=%3D%2Fbin%2Fbash-,Press%20CTRL%2BX%20or%20F10%20to%20save%20the%20changes%20and,boot%20into%20the%20root%20prompt.&text=Type%20in%20the%20command%20passwd%20to%20set%20the%20new%20password.,-The%20password%20would}.
+\newblock (Accessed on 12/01/2022).
+
+\bibitem{PartVMan11:online}
+Part v. manual pages: polkit reference manual.
+\newblock
+  \url{https://www.freedesktop.org/software/polkit/docs/latest/manpages.html}.
+\newblock (Accessed on 11/19/2022).
+
+\bibitem{pkexeclo25:online}
+pkexec: local privilege escalation (cve-2021-4034) (a2bf5c9c) · commits ·
+  polkit / polkit · gitlab.
+\newblock
+  \url{https://gitlab.freedesktop.org/polkit/polkit/-/commit/a2bf5c9c83b6ae46cbd5c779d3055bff81ded683}.
+\newblock (Accessed on 11/30/2022).
+
+\bibitem{pkexec1E89:online}
+pkexec(1): Execute command as another user - linux man page.
+\newblock \url{https://linux.die.net/man/1/pkexec}.
+\newblock (Accessed on 11/16/2022).
+
+\bibitem{policyki47:online}
+policykit [wiki ubuntu-fr].
+\newblock \url{https://doc.ubuntu-fr.org/policykit}.
+\newblock (Accessed on 11/19/2022).
+
+\bibitem{arthepsy}
+Arthepsy.
+\newblock Arthepsy/cve-2021-4034: Poc for pwnkit: Local privilege escalation
+  vulnerability in polkit's pkexec (cve-2021-4034).
+
+\bibitem{qualys}
+Director Bharat~Jogi.
+\newblock Pwnkit: Local privilege escalation vulnerability discovered in
+  polkit's pkexec (cve-2021-4034), Feb 2022.
+
+\end{thebibliography}
