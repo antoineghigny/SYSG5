@@ -1,19 +1,7 @@
-#!bin/bash
+all: PwnKit
 
-.PHONY: all
-all: pwnkit.so exploit gconv-modules gconvpath
+PwnKit:
+	gcc PwnKit.c -o PwnKit
 
-gconv-modules:
-	echo "module UTF-8// PWNKIT// pwnkit 1" > $@
-
-.PHONY: gconvpath
-gconvpath:
-	mkdir -p GCONV_PATH=.
-	cp pwnkit.so GCONV_PATH=./pwnkit.so:.
-
-pwnkit.so: pwnkit.c
-	gcc -Wall --shared -fPIC -o $@ $<
-
-.PHONY: dry-run
-dry-run:
-	make -C dry-run
+clean:
+	rm PwnKit
