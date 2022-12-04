@@ -20,8 +20,7 @@ echo
 ./PwnKit
 echo -e "${E}Supression des dossiers générés : ${N}"
 rm -rf GCONV_PATH=.
-rm payload.c
-rm payload.so
+
 rm PwnKit
-rm -rf unfichier
+rm -rf pwnkit
 
