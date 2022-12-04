@@ -20,7 +20,6 @@ echo
 ./PwnKit
 echo -e "${E}Supression des dossiers générés : ${N}"
 rm -rf GCONV_PATH=.
-
 rm PwnKit
-rm -rf pwnkit
+rm -rf exploit
 

