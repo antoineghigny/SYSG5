@@ -1,9 +1,3 @@
-pdflatex SYSG5\ -\ Failles\ de\ sécurité\ linux.tex 1 > /dev/null
+pdflatex SYSG5\ -\ Failles\ de\ sécurité\ linux.tex
 bibtex SYSG5\ -\ Failles\ de\ sécurité\ linux
-pdflatex SYSG5\ -\ Failles\ de\ sécurité\ linux.tex 1 > /dev/null
-rm *.aux 
-rm *.out 
-rm *.toc 
-rm *.log 
-rm *.bbl 
-rm *.blg 
+pdflatex SYSG5\ -\ Failles\ de\ sécurité\ linux.tex
