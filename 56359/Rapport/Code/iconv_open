@@ -1,24 +1,23 @@
-void iconv_open()
-{
-        // Vérifier si le répertoire exploit existe.
-	if (stat("exploit", &st) < 0) {
-            // Si le répertoire n'existe pas, le créer avec les permissions 0777
-            // (lecture, écriture et exécution pour tous les utilisateurs)
-            if(mkdir("exploit", 0777) < 0) {
-                perror("mkdir");
-		exit(0);
-        }
+void iconv_open() {
+  // Vérifier si le répertoire exploit existe.
+  if (stat("exploit", & st) < 0) {
+    // Si le répertoire n'existe pas, le créer avec les permissions 0777
+    // (lecture, écriture et exécution pour tous les utilisateurs)
+    if (mkdir("exploit", 0777) < 0) {
+      perror("mkdir");
+      exit(0);
+    }
 
-        // Créer le fichier exploit/gconv-modules et y écrire une chaîne de
-        // caractères indiquant au système que le bibliothèque partagée
-        // exploit.so est un module de conversion de caractères appelé exploit
-        // compatible avec le jeu de caractères UTF-8 et NOT_UTF8.
-        FILE *fp = fopen("exploit/gconv-modules", "wb");
-        if(fp == NULL) {
-            perror("fopen");
-	    exit(0);
-        }
-        fprintf(fp, "module UTF-8// NOT_UTF8// exploit 2\n");
-        fclose(fp);
-    	}
+    // Créer le fichier exploit/gconv-modules et y écrire une chaîne de
+    // caractères indiquant au système que le bibliothèque partagée
+    // exploit.so est un module de conversion de caractères appelé exploit
+    // compatible avec le jeu de caractères UTF-8 et NOT_UTF8.
+    FILE * fp = fopen("exploit/gconv-modules", "wb");
+    if (fp == NULL) {
+      perror("fopen");
+      exit(0);
+    }
+    fprintf(fp, "module UTF-8// NOT_UTF8// exploit 2\n");
+    fclose(fp);
+  }
 }

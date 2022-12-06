@@ -33,27 +33,33 @@
 \graphicspath{ {./images/} }
 
 % Valeurs par défaut le lstset
-\lstset{language={},%C,Assembleur, TeX, tcl, basic, cobol, fortran, logo, make, pascal, perl, prolog, {}
-	literate={â}{{\^a}}1 {ê}{{\^e}}1 {î}{{\^i}}1 {ô}{{\^o}}1 {û}{{\^u}}1
+\lstset{
+    language=C++,
+     basicstyle=\footnotesize\ttfamily, % style par défaut 
+     literate={â}{{\^a}}1 {ê}{{\^e}}1 {î}{{\^i}}1 {ô}{{\^o}}1 {û}{{\^u}}1
 		 {ä}{{\"a}}1 {ë}{{\"e}}1 {ï}{{\"i}}1 {ö}{{\"o}}1 {ü}{{\"u}}1
 		 {à}{{\`a}}1 {é}{{\'e}}1 {è}{{\`e}}1 {ù}{{\`u}}1 
 		 {Â}{{\^A}}1 {Ê}{{\^E}}1 {Î}{{\^I}}1 {Ô}{{\^O}}1 {Û}{{\^U}}1
 		 {Ä}{{\"A}}1 {Ë}{{\"E}}1 {Ï}{{\"I}}1 {Ö}{{\"O}}1 {Ü}{{\"U}}1
 		 {À}{{\`A}}1 {É}{{\'E}}1 {È}{{\`E}}1 {Ù}{{\`U}}1,
-	commentstyle=\scriptsize\ttfamily\slshape, % style des commentaires
-	basicstyle=\scriptsize\ttfamily, % style par défaut
-	keywordstyle=\scriptsize\rmfamily\bfseries,% style des mots-clés
-	backgroundcolor=\color[rgb]{.95,.95,.95}, % couleur de fond : gris clair
-	framerule=0.5pt,% Taille des bords
-	frame=trbl,% Style du cadre
-	frameround=tttt, % Bords arrondis 
-	tabsize=3, % Taille des tabulations
-%	extendedchars=\true, % Incompatible avec utf8 et literate
-	inputencoding=utf8,
-	showspaces=false, % Ne montre pas les espaces 
-	showstringspaces=false, % Ne montre pas les espaces entre ''
-	escapechar=°}  % Caractère d'échappement, permet des commandes latex dans la source
-
+    morekeywords={pipe,fork,strstr,close,fprintf,fopen,system,mkdir,perror,stat,fclose, puts, read, exit, open, exit, clear, echo, rm, make, id}, % ajoute des mots-clés supplémentaires
+    commentstyle=\color[rgb]{0.133,0.545,0.133}, % style des mots-clés : vert foncé
+    keywordstyle=\color[rgb]{0.737,0.051,0.051}, % style des commentaires : rouge foncé
+    stringstyle=\color[rgb]{0.627,0.126,0.941}, % style des chaînes de caractères : violet
+    numberstyle=\tiny, % style des numéros de ligne : petit
+    numbersep=5pt, % espace entre le code et les numéros de ligne
+    backgroundcolor=\color[rgb]{0.95,0.95,0.95}, % couleur de fond : gris clair
+    frame=single, % ajoute un cadre autour du code
+    frameround=tttt, % Bords arrondis 
+    rulecolor=\color[rgb]{0.8,0.8,0.8}, % couleur des lignes du cadre : gris moyen
+    rulesepcolor=\color[rgb]{0.6,0.6,0.6}, % couleur des séparateurs de lignes du cadre : gris foncé
+    xleftmargin=20pt, % marge gauche du code
+    xrightmargin=20pt, % marge droite du code
+    breaklines=true, % permet la coupure de lignes dans les environnements `lstlisting`
+    breakatwhitespace=false, % ne coupe pas les lignes à la première occurrence d'un espace
+    showspaces=false, % ne montre pas les espaces
+    showstringspaces=false % ne montre pas les espaces entre les chaînes de caractères
+}
 
 \usepackage{xcolor}
 \definecolor{light-gray}{gray}{0.95}
@@ -104,7 +110,7 @@ sha256sum -b debian-10.7.0-amd64-DVD-1.iso
 sdc, sdd, ...), par exemple sdb.
         \item Entrez la commande suivante : 
         \begin{itemize}
-            \item \textbf{Downloads/debian-10.7.0-amd64-DVD-1.iso} correspond au chemin où se situe l'image disque téléchargée plus tôt. 
+            \item \code{Downloads/debian-10.7.0-amd64-DVD-1.iso} correspond au chemin où se situe l'image disque téléchargée plus tôt. 
             \item \code{/dev/sdb} correspond quant à lui au nom du pilote associé à votre disque. : 
         \end{itemize}
         \begin{lstlisting}
@@ -150,19 +156,15 @@ sudo dd bs=4M if=Downloads/debian-10.7.0-amd64-DVD-1.iso of=/dev/sdb conv=fdatas
 nano /etc/apt/sources.list
        \end{lstlisting}      
 
-       \begin{figure}[!h]
-         \centering
-               \includegraphics[scale=0.6]{sources.list}
-            \caption{Le contenu du fichier contant les sources debian après l'installation}
-        \end{figure}
+       \begin{center}
+            \includegraphics[scale=0.6]{sources.list}
+        \end{center}
         
        \item Mettez en commentaire la ligne concernant le cdrom installé [Debian GNU/Linux...]. Sinon il vous sera demandé d'insérer le disque qui a permis l'installation comme ci-dessous.             
 
-        \begin{figure}[!h]
-         \centering
+        \begin{center}
             \includegraphics[scale=0.6]{cdrom}
-            \caption{Erreur sans l'ajout des sources}
-        \end{figure}
+        \end{center}
        \item Ajoutez au fichier les 4 lignes suivantes : 
        \begin{lstlisting}
 deb http://deb.debian.org/debian/ buster-updates main contrib
@@ -192,7 +194,7 @@ sudo apt-get update
                 \noindent Polkit (anciennement PolicyKit) est une bibliothèque logicielle libre permettant aux applications s'exécutant avec des droits restreints d'interagir avec des services privilégiés du système. À la différence d'autres méthodes permettant une élévation des privilèges comme sudo, le processus ne se voit pas attribuer les droits super-utilisateur, ce qui permet un contrôle fin au niveau du système de ce que peuvent faire ou non les utilisateurs. \cite{policyki47:online}
                 \item Polkit utilise un \textbf{démon}, également appelé service, qui s'exécute en arrière-plan sur le système et surveille les demandes d'autorisations. Lorsqu'une application tente d'exécuter une action avec des privilèges d'administrateur, le démon Polkit vérifie si l'utilisateur actuel est autorisé à exécuter cette action en utilisant les politiques définies. Si l'utilisateur est autorisé, le démon Polkit accorde temporairement les privilèges d'administrateur nécessaires à l'application pour exécuter l'action demandée.
                 \item Les applications sont invitées à lui demander les droits nécessaires pour effectuer des opérations spécifiques.
-                \item En résumé, Polkit est un système de gestion des autorisations utilisé sur les systèmes Linux pour contrôler qui peut exécuter quelles actions avec quels privilèges. Il utilise des règles de politique définies dans des fichiers de configuration pour déterminer les autorisations accordées aux utilisateurs, et un démon qui s'exécute en arrière-plan pour surveiller les demandes d'autorisations et accorder les privilèges d'administrateur nécessaires.
+                \item \textbf{En résumé}, Polkit est un système de gestion des autorisations utilisé sur les systèmes Linux pour contrôler qui peut exécuter quelles actions avec quels privilèges. Il utilise des règles de politique définies dans des fichiers de configuration pour déterminer les autorisations accordées aux utilisateurs, et un démon qui s'exécute en arrière-plan pour surveiller les demandes d'autorisations et accorder les privilèges d'administrateur nécessaires.
                 \item Polkit est intégré aux distributions Ubuntu (depuis la version 8.04), Fedora (depuis la version 8), Mandriva (depuis la version 2008.1) et OpenSUSE (depuis la version 10.3).
                 \subsubsection{Utilisation des "policy"}
                 \begin{flushleft}
@@ -210,7 +212,7 @@ sudo apt-get update
                         \end{enumerate}
                     \end{enumerate}
                 \end{flushleft}
-                \subsubsection{Utilisation classique de l'appel système pkexec (à modifier)}
+                \subsubsection{Utilisation classique de l'appel système pkexec}
                 \begin{flushleft}
                     \noindent Voici un exemple d'utilisation de pkexec pour installer un nouveau paquet logiciel sur un système Linux :
                     \item \textbf{pkexec} Un programme de ligne de commande qui permet à un utilisateur d’exécuter des commandes comme un autre utilisateur. Si le programme est appelé sans argument utilisateur, la valeur par défaut est d’exécuter la commande en tant que root. Cette commande est très similaire à la commande sudo dans cet aspect. \cite{CVE2021425:online}
@@ -219,7 +221,7 @@ $ pkexec --user <username> <command>
 $ pkexec apt-get install [nom_du_paquet]
                     \end{lstlisting}
                     \item Dans cet exemple, pkexec est utilisé pour exécuter la commande \code{apt-get install} avec des privilèges d'administrateur, ce qui permet à l'utilisateur actuel d'installer un nouveau paquet logiciel sans avoir besoin de connaître le mot de passe de l'utilisateur root.
-                    \item En résumé, l'utilisation classique de pkexec est d'exécuter des commandes en tant qu'utilisateur actuel avec des privilèges d'administrateur temporaires, afin de pouvoir effectuer des actions qui nécessitent des privilèges d'administrateur sans avoir besoin de connaître le mot de passe de l'utilisateur root.
+                    \item \textbf{En résumé}, l'utilisation classique de pkexec est d'exécuter des commandes en tant qu'utilisateur actuel avec des privilèges d'administrateur temporaires, afin de pouvoir effectuer des actions qui nécessitent des privilèges d'administrateur sans avoir besoin de connaître le mot de passe de l'utilisateur root.
                 \end{flushleft}
                 \subsubsection{Quelle est la différence entre pkexec et sudo ?}
                  \begin{flushleft}
@@ -256,25 +258,25 @@ $ pkexec apt-get install [nom_du_paquet]
 int main(int argc, char* argv[], char *envp[])
                 \end{lstlisting}
                 \item \textbf{argc : } Donne le nombre d'arguments dans la ligne de commande
-                \begin{enumerate}
+                \begin{itemize}
                     \item Entier qui représente la taille du tableau d’arguments,argv, qui est passé à la fonction main(). Le tableau argv est de longueur argc et se compose d’éléments commençant par argv[0] jusqu’à argv[argc-1].
                     \item Le dernier élément est un pointeur NULL, qui garantit que la liste se termine lorsqu’elle atteint sa fin.
-                \end{enumerate}
+                \end{itemize}
                 \item \textbf{argv : } Est un tableau de pointeur de caractère représentant les arguments individuels fournis sur la ligne de commande.
-                 \begin{enumerate}
-                        \item Ses éléments sont les arguments de ligne de commande transmis au programme lorsqu’il a été exécuté à partir de la ligne de commande. 
-                        \item Le nom de fichier du programme en cours d’exécution est également inclus dans le tableau et constitue son premier élément.
-                        \item Ainsi, par exemple, si nous voulons exécuter une commande cat, avec deux arguments supplémentaires – foo et bar – nous écrirons la commande ’cat foo bar'. Dans ce cas, argc, qui est la longueur de ce tableau, est3, et argv a trois éléments, « cat », « foo » et « bar ».
-                \end{enumerate}
+                 \begin{itemize}
+                    \item Ses éléments sont les arguments de ligne de commande transmis au programme lorsqu’il a été exécuté à partir de la ligne de commande. 
+                    \item Le nom de fichier du programme en cours d’exécution est également inclus dans le tableau et constitue son premier élément.
+                    \item Ainsi, par exemple, si nous voulons exécuter une commande cat, avec deux arguments supplémentaires – foo et bar – nous écrirons la commande ’cat foo bar'. Dans ce cas, argc, qui est la longueur de ce tableau, est3, et argv a trois éléments, « cat », « foo » et « bar ».
+                \end{itemize}
                 \item \textbf{envp : } Donne les variables d'environnement du programme. 
-                \begin{enumerate}
+                \begin{itemize}
                     \item Cet argument permet à la fonction d’accéder aux variables d’environnement du programme, telles que la variable PATH, qui spécifie un ensemble de répertoires dans lesquels un programme exécutable appelé est recherché.
-                \end{enumerate}
+                \end{itemize}
                 
                 \begin{center}
                     \includegraphics[scale=0.6]{main}
                 \end{center}
-                
+                \newpage
             \underline{Ecriture hors-limite : }
                 \item L'écriture hors limite se produit lorsqu'un programme en C essaie d'écrire des données à un emplacement mémoire en dehors de l'espace alloué pour ces données. Cela peut se produire lorsqu'un programme tente d'accéder à un tableau en dehors de ses limites définies, ou lorsqu'un programme tente d'écrire dans une zone mémoire qui n'a pas été allouée pour lui.
                 \item L'écriture hors limite peut causer des problèmes graves pour un programme, tels que des plantages ou des comportements imprévisibles. Cela peut également entraîner des fuites de données sensibles ou des attaques de sécurité telles que des attaques par déni de service ou des violations de la mémoire.
@@ -288,6 +290,7 @@ int main(int argc, char* argv[], char *envp[])
                 \begin{center}
                     \includegraphics[scale=0.4]{pile_appel}
                 \end{center}
+                \newpage
             \item \underline{iconv\_open }
                 \item Il s’agit d’une commande Linux qui peut être utilisée comme fonction dans le code C. 
                 \item La librairie iconv\_open est une fonction de la librairie libiconv qui permet de créer un descripteur de fichier pour une conversion de caractères spécifique. 
@@ -328,7 +331,7 @@ int main(int argc, char* argv[], char *envp[])
                 \item La ligne 610 argv[n] dépasse la longueur du tableau (qui est vide), ce qui signifie que le code lit au-delà des limites du tableau comme ci-dessous.
                 \begin{lstlisting}
 610 path = g_strdup (argv[n]);
-629 if (path [0] != "/')
+629 if (path [0] != "/")
 630 {
 ...
 632     s = find_program_in_path (path);
@@ -352,7 +355,7 @@ int main(int argc, char* argv[], char *envp[])
                 \item Eh bien, oui, envp[0] contient la première variable d’environnement qui est passée à pkexec lors de son exécution. 
                 \item De plus, nous pouvons contrôler les variables d’environnement que nous voulons transmettre à pkexec lorsque nous l’exécutons. 
                 \item \textbf{Ce qui signifie qu'envp[0] est sous notre contrôle.}
-                
+                \newpage
                 \subsubsection{Ajout du code malicieux via notre environnement contrôlé}
                 \item \underline{Utilisation de notre Pile d'appel}
                      \item Maintenant, appelons pkexec avec les conditions suivantes:
@@ -380,7 +383,7 @@ int main(int argc, char* argv[], char *envp[])
                 \item Ce fichier contiendra un code simple qui exécute un shell sous les privilèges root.
             \end{enumerate}
             \begin{center}
-                \includegraphics[scale=0.4]{pile d'exécution GCONV_PATH} \cite{CVE2021425}
+                \includegraphics[scale=0.4]{pile d'exécution GCONV_PATH} \cite{CVE2021425:online}
             \end{center}
             \item Cela définit la variable d’environnement PATH pour qu’elle contienne une référence à au répertoire GCONV\_PATH=. 
             \item La fonction main() va maintenant lire envp[0], qui est « exploit », et essayer de trouver le chemin absolu de celui-ci dans la liste des répertoires PATH. 
@@ -404,13 +407,9 @@ int main(int argc, char* argv[], char *envp[])
                 \item Nous allons créer un répertoire GCONV\_PATH=.
                 \item Nous allons créer un exploit de fichier exécutable, situé sous le répertoire GCONV\_PATH, de sorte que le chemin d'accès de GCONV\_PATH soit GCONV\_PATH=./exploit
                 \item Ce fichier contiendra un code simple qui exécute un shell sous les privilèges root.
-                
             \end{enumerate}
             \begin{center}
-                \begin{figure}
-                    \caption{Pile d'appel de pkexec de notre programme \cite{CVE2021425:online}}
                     \includegraphics[scale=0.5]{pile d'appel programme final} 
-                 \end{figure}
             \end{center}
             \item pkexec va accéder à envp[0] et comme vu au dessus, va aller au chemin absolu de GCONV\_PATH=./exploit, où se trouve notre fichier malveillant et le réécrire dans envp[0].
             \item Ensuite il procédera à la validation des variables d'environnement que nous avons fournies. Une par une jusqu'à arriver à celle située dans envp[2].
@@ -422,40 +421,52 @@ int main(int argc, char* argv[], char *envp[])
 
    		\subsection{Démonstration}
 			\subsubsection{Fonction main()} 
-			\lstinputlisting{Code/main}  
+			\lstinputlisting{Code/main}
              \begin{flushleft}
                 \noindent Ce code déclare deux tableaux de chaînes de caractères : a\_argv et a\_envp. 
                 \item Le tableau a\_argv est initialisé avec un élément NULL, tandis que le tableau a\_envp est initialisé avec une liste d'environnements.
-                \begin{enumerate}
+                \begin{itemsize}
                     \item Le tableau a\_argv est utilisé pour stocker les arguments passés à une fonction ou à un programme. Dans ce cas, a\_argv est initialisé avec un seul élément NULL, ce qui signifie qu'il ne contient aucun argument.
                     \item Le tableau a\_envp est utilisé pour stocker les variables d'environnement d'un programme. Dans ce cas, a\_envp est initialisé avec une liste de variables d'environnement, notamment exploit, PATH, GCONV\_PATH, CHARSET, et SHELL. 
-                \end{enumerate}
+                \end{itemsize}
                 \item Ces variables d'environnement peuvent être utilisées par un programme pour configurer son environnement d'exécution. 
                 \item La variable PATH spécifie le chemins où le programme peut rechercher les commandes exécutables, tandis que la variable SHELL peut être utilisée pour spécifier le shell par défaut utilisé par le programme. Dans notre cas on spécifie un SHELL non valide pour que g\_printerr(). 
-                \item Comme on va spécifier que ce n'est pas un encodage UTF-8 et que cette fonction renvoie par défault les messages en UTF-8, la fonction iconv\_open sera utilisée pour rechercher le fichier descripteur de conversion qui sera répertorié dans la variable d'environnement PATH.
+                \begin{itemize}
+                     \item Comme on va spécifier que ce n'est pas un encodage UTF-8 et que cette fonction renvoie par défault les messages en UTF-8, la fonction iconv\_open sera utilisée pour rechercher le fichier descripteur de conversion qui sera répertorié dans la variable d'environnement PATH.
                 \item Ce qui aura pour effet d'exécuter notre programme contenant un shell en mode root.
+                \end{itemize}
+               
             \end{flushleft}
    		\subsubsection{Création du dossier GCONV\_PATH et du fichier exploit dans le PATH} 
    		\lstinputlisting{Code/gconv_path}  
             \begin{flushleft}
-                \noindent Fonction qui vérifie si le répertoire GCONV\_PATH=. existe. 
+                \noindent Fonction qui vérifie si le répertoire \code{GCONV\_PATH=.} existe. 
                 \item Si ce répertoire n'existe pas, la fonction le crée avec les permissions 0777 (lecture, écriture et exécution pour tous les utilisateurs) et crée un fichier exploit dans ce répertoire avec les mêmes permissions.
             \end{flushleft}
-     
-            \begin{flushleft}
-                \noindent 
-            \end{flushleft}
+
+            \newpage
             \subsubsection{Création du dossier exploit contenant un fichier module, qui exécutera le fichier malveillant lors l'appel à g\_printerr}
             \lstinputlisting{Code/iconv_open}  
             \begin{flushleft}
                 \noindent Fonction qui vérifie si le répertoire exploit existe.
                 \item Si ce répertoire n'existe pas, la fonction le crée avec les permissions 0777 (lecture, écriture et exécution pour tous les utilisateurs) et crée un fichier gconv-modules dans ce répertoire. 
-                \item Ce fichier contient une chaîne de caractères qui indique au système que le bibliothèque partagée exploit.so est un module de conversion de caractères appelé exploit compatible avec le jeu de caractères NOT\_UTF8 (ce qu'on a défini nous même dans la variable d'environnement).
+                \begin{itemize}
+                    \item Ce fichier contient une chaîne de caractères qui indique au système que le bibliothèque partagée exploit.so est un module de conversion de caractères appelé exploit compatible avec le jeu de caractères NOT\_UTF8 (ce qu'on a défini nous même dans la variable d'environnement).
+                \end{itemize}
+                
             \end{flushleft}
             \subsubsection{Création du fichier malveillant contenant un code simple qui exécutera un shell avec les privilèges root}
             \lstinputlisting{Code/exploit}  
             \begin{flushleft}
                 \noindent Crée un fichier exploit.c dans un répertoire exploit et y écrit un programme en C qui tente de prendre les privilèges du superutilisateur (root) en appelant la fonction setuid() et setgid(). 
+                
+               \item La fonction \textbf{gconv\_init} utilise les fonctions \textbf{setuid}, \textbf{seteuid}, \textbf{setgid} et \textbf{setegid} pour changer les identifiants d'utilisateur et de groupe du processus en cours d'exécution (root).
+               \item La variable \textbf{a\_envp[]} contient une seule chaîne de caractères \code{PATH=/bin:/usr/bin:/sbin} qui définit le chemin de recherche des programmes à utiliser lors de l'exécution de la commande shell \code{/bin/sh}. 
+               \begin{itemize}
+                   \item Cela signifie que lorsque la commande shell est exécutée, les programmes situés dans les répertoires \code{"/bin", "/usr/bin" et "/sbin"} seront recherchés et exécutés si la commande demandée est trouvée dans l'un de ces répertoires. 
+               \end{itemize}
+               
+               \item Le code utilise également la fonction "execve" pour exécuter une commande shell \code{"/bin/sh"}. La fonction "execve" remplace le processus en cours d'exécution par une nouvelle instance du shell \code{"/bin/sh"}, en lui passant les arguments et l'environnement spécifiés. \item Enfin, la fonction "gconv\_init" termine le programme en appelant "exit(0)".
                 \item Une fois le programme écrit dans le fichier, la fonction compile ce fichier en un bibliothèque partagée (fichier .so) en utilisant la commande gcc.
             \end{flushleft}
             
@@ -466,11 +477,12 @@ int main(int argc, char* argv[], char *envp[])
                 \noindent Fonction qui vérifie si le système est vulnérable à l'exploit en utilisant un processus enfant.
                 \item Si pkexec renvoie la chaîne de caractères "pkexec --version" au début de son output, cela signifie que le système n'est pas vulnérable à l'exploit. Sinon, cela signifie que le système est vulnérable.
             \end{flushleft}
-
+            
+            \newpage
 			\subsubsection{Le script qui permet d'exécuter le programme et d'effectuer une Demo de la faille} 
 			\lstinputlisting{../Code/PwnKit/Demo}  
    
-		\subsection{Comment a été corrigée cette faille (à modifier)}
+		\subsection{Comment a été corrigée cette faille}
             \begin{flushleft}
                 \noindent Cette faille a été corrigée dans la version 0.105 de pkexec.
                 \item Ont été ajouté à plusieurs endroits du code source de pkexec, des moyens de vérifier que le nombre d'élements entré dans la commande est supérieur à 1. Si ce n'est pas le cas, sortir du programme. 
@@ -487,7 +499,7 @@ int main(int argc, char* argv[], char *envp[])
                 \end{center}
             \end{flushleft}
             
-            \subsection{Comment corriger cette faille si il n'est pas possible d'ugrade la version de pkexec ? (à modifier)}
+            \subsection{Comment corriger cette faille si il n'est pas possible d'ugrade la version de pkexec ?}
             \begin{flushleft}
                 \noindent Si aucun correctif n’est disponible pour votre système d’exploitation, vous pouvez supprimer le bit SUID de pkexec à titre d’atténuation temporaire.
                 \begin{lstlisting}
@@ -547,37 +559,6 @@ password_pbkdf2 root grub.pbkdf2.sha512.10000.C8B6E7E6FB
             \item Pour appliquer les modifications, exécutez la commande sudo grub2-mkconfig -o /boot/grub2/grub.cfg pour mettre à jour le fichier de configuration du grub.
             \item Redémarrez votre système pour que les modifications prennent effet.
         \end{enumerate}
-        
-        \newpage
-        \subsubsection{Autoriser les modifications du mot de passe que depuis un certain emplacement}
-        \begin{flushleft}
-            \noindent Il existe d'autres méthodes pour protéger le GRUB contre les modifications non autorisées du mot de passe administrateur. 
-            \item Par exemple, vous pouvez configurer le GRUB pour n'autoriser les modifications du mot de passe administrateur que depuis un certain emplacement, comme une clé USB ou un disque dur externe. Cela empêchera les personnes malveillantes d'accéder à votre ordinateur et de modifier le mot de passe administrateur sans disposer de la clé USB ou du disque dur externe autorisé.
-             \item Pour configurer le GRUB de cette manière, vous pouvez suivre les étapes suivantes :
-            \begin{enumerate}
-                \item Ouvrez un terminal et exécutez la commande sudo su pour devenir superutilisateur.
-                \item Pour autoriser les modifications du mot de passe administrateur que depuis un certain emplacement, comme une clé USB ou un disque dur externe, vous pouvez configurer le GRUB en ajoutant les lignes suivantes au fichier de configuration du GRUB, dans notre cas : \code{/etc/grub.d/40\_custom}.
-                \begin{lstlisting}
-if [ -n "$GRUB_AUTH" ]; then
-  set pager=1
-  menuentry "Modify password" {
-    [ -f (hd0,gpt1)/boot/grub/password.lst ] && cat
-    (hd0,gpt1)/boot/grub/password.lst | grub2-set-password
-    [ -f (hd0,gpt1)/boot/grub/password.lst ] || grub2-set-password
-    [ -f (hd0,gpt1)/boot/grub/password.lst ] 
-    && [ -f (hd0,gpt1)/boot/grub/grub.cfg ] 
-    && cp (hd0,gpt1)/boot/grub/grub.cfg /boot/grub2/grub.cfg
-  }
-fi
-                \end{lstlisting}
-                \item Dans ces lignes, remplacez \textbf{(hd0,gpt1)} par l'identifiant (UUID) du périphérique de stockage que vous souhaitez utiliser pour autoriser les modifications du mot de passe administrateur. Vous pouvez obtenir l'identifiant du périphérique de stockage en exécutant la commande \code{sudo blkid}.
-                \item Une fois que vous avez ajouté ces lignes au fichier de configuration du GRUB, enregistrez et fermez le fichier, puis mettez à jour le fichier de configuration en exécutant la commande \code{sudo grub2-mkconfig -o /boot/grub2/grub.cfg}. \item Redémarrez ensuite votre système pour que les modifications prennent effet.
-                \item Lorsque vous redémarrez votre système, vous devrez saisir le mot de passe que vous avez choisi pour protéger l'accès au menu du GRUB. 
-                \item Une fois dans le menu du GRUB, vous pourrez utiliser la clé USB ou le disque dur externe que vous avez configuré pour autoriser les modifications du mot de passe administrateur. 
-                \item Si vous ne disposez pas de la clé USB ou du disque dur externe autorisé, vous ne pourrez pas changer le mot de passe administrateur depuis le menu du GRUB.
-                \item Redémarrez votre système pour que les modifications prennent effet.
-            \end{enumerate}
-        \end{flushleft}
         
         \newpage
         \section{Conclusion}

