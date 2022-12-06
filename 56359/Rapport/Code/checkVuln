@@ -1,20 +1,34 @@
 void checkVulnerability()
 {
+    // Créer un pipe pour échanger des données entre le processus parent
+    // et le processus enfant.
     pipe(pipefd);
+
+    // Si on est dans le processus enfant...
     if (fork() == 0)
     {
+         // Fermer l'extrémité d'écriture du pipe.
         close(pipefd[1]);
+        // Lire les données du pipe dans le tampon buf.
         read(pipefd[0], buf, sizeof(buf)-1);
+        // Fermer l'extrémité de lecture du pipe.
 	close(pipefd[0]);
+
+        // Si la chaîne de caractères "pkexec --version" est présente au début
+        // du tampon buf, cela signifie que le système n'est pas vulnérable à
+        // l'exploit.
         if (strstr(buf, "pkexec --version") == buf) {
             puts("System is not vulnerable");
 	    exit(0);
+        // Sinon, cela signifie que le système est vulnérable à l'exploit.
         }else{
 	    puts("System vulnerable");
 	}
-	
+	// Fin du processus Enfant
         exit(0);
     }
+    //  // Dans le processus parent, fermer l'extrémité de lecture et d'écriture du
+    // tube nommé.
     close(pipefd[0]);
     close(pipefd[1]);
 }

@@ -1,9 +1,8 @@
 \documentclass[12pt,a4paper]{article}
 
-\usepackage[utf8]{inputenc}
-\usepackage[french]{babel}
-\usepackage[T1]{fontenc}
 
+\fontsize{12}{14}\selectfont
+\usepackage[T1]{fontenc}
 \makeatletter
 \title{SYSG5 : Exploitation de failles de sécurité LINUX}
 \let\Title\@title
@@ -30,8 +29,6 @@
 \usepackage{color}
 \usepackage{makeidx}
 \usepackage{verbatim}
-
-
 
 \graphicspath{ {./images/} }
 
@@ -123,7 +120,12 @@ sudo dd bs=4M if=Downloads/debian-10.7.0-amd64-DVD-1.iso of=/dev/sdb conv=fdatas
            \item Masque de sous réseau : 255.255.255.0
            \item DNS : 195.238.2.21 195.238.2.21 8.8.8.8
        \end{itemize}
-       \subsection{Configuration des partitions}R
+       \subsection{Configuration des partitions}
+       \begin{flushleft}
+        \noindent Il est important de configurer correctement les partitions sur un disque dur pour plusieurs raisons. 
+       \item Tout d'abord, cela permet de séparer les données et les fichiers du système d'exploitation, ce qui peut faciliter la gestion et l'entretien du système. 
+       \item Deuxièmement, cela peut aider à protéger les données en cas de crash ou de corruption du système d'exploitation, car les données stockées dans une partition séparée ne seront pas affectées. 
+       \item Enfin, la configuration des partitions peut également améliorer les performances du système, car cela permet d'optimiser l'utilisation de l'espace disque et de répartir les données de manière plus équitable.
        \item Les partitions à paramétrer ont été les suivantes : 
        \begin{itemize}
            \item 1 : Changer la partition de fat16 à EFI
@@ -133,6 +135,10 @@ sudo dd bs=4M if=Downloads/debian-10.7.0-amd64-DVD-1.iso of=/dev/sdb conv=fdatas
            \item 7 : 10 GB : /home
            \item 8 : 10GB : /usr 
        \end{itemize}
+       \item Dans cet exemple, la partition biosgrub est utilisée pour stocker les fichiers de démarrage du système d'exploitation. 
+       \item La partition SWAP est utilisée comme zone de mémoire virtuelle pour augmenter la mémoire disponible lorsque la mémoire physique est pleine. \item Les partitions /, /home et /usr sont des partitions de données, qui sont utilisées pour stocker les fichiers et les données utilisateur. La partition / est utilisée pour stocker les fichiers système, tandis que la partition /home est utilisée pour stocker les fichiers personnels de l'utilisateur, et la partition /usr est utilisée pour stocker les programmes et les bibliothèques utilisées par le système.
+       \end{flushleft}
+       
        \subsection{Configuration de l'environnement de travail}
        
       
@@ -169,6 +175,8 @@ deb-src http://ftp.debian.org/debian/ buster main contrib
     \begin{lstlisting}
 sudo apt-get update
     \end{lstlisting}
+    \item La commande \code{apt-get update} est utilisée pour mettre à jour les informations sur les paquets disponibles à partir des dépôts de logiciels configurés sur le système. Cela permet de s'assurer que les informations sur les paquets sont à jour et que vous pouvez installer les dernières versions des logiciels disponibles.
+    \item La commande \code{apt-get update} utilise les informations contenues dans le fichier \code{/etc/apt/sources.list} pour savoir où chercher les mises à jour des paquets. Ce fichier contient une liste des dépôts de logiciels où apt-get peut aller chercher les mises à jour des paquets. 
     \item Vous pouvez maintenant installer des packets tels que "git", "make" ou encore "gcc".
     \item Votre environnement de développement est maintenant prêt.
    \end{flushleft}
@@ -182,40 +190,46 @@ sudo apt-get update
             \subsection{A quoi sert la bibliothèque Polkit et en particulier l'appel système pkexec ? }
             \begin{flushleft}
                 \noindent Polkit (anciennement PolicyKit) est une bibliothèque logicielle libre permettant aux applications s'exécutant avec des droits restreints d'interagir avec des services privilégiés du système. À la différence d'autres méthodes permettant une élévation des privilèges comme sudo, le processus ne se voit pas attribuer les droits super-utilisateur, ce qui permet un contrôle fin au niveau du système de ce que peuvent faire ou non les utilisateurs. \cite{policyki47:online}
-                \item C'est un logiciel moderne actuellement privilégié par les développeurs d'environnements graphiques grâce à la sécurité qu'il fournit, en effet il fonctionne selon le principe suivant : 
-                \item Un programme (démon) s'exécute en arrière-plan (sans fenêtre), et dispose des droits root.
+                \item Polkit utilise un \textbf{démon}, également appelé service, qui s'exécute en arrière-plan sur le système et surveille les demandes d'autorisations. Lorsqu'une application tente d'exécuter une action avec des privilèges d'administrateur, le démon Polkit vérifie si l'utilisateur actuel est autorisé à exécuter cette action en utilisant les politiques définies. Si l'utilisateur est autorisé, le démon Polkit accorde temporairement les privilèges d'administrateur nécessaires à l'application pour exécuter l'action demandée.
                 \item Les applications sont invitées à lui demander les droits nécessaires pour effectuer des opérations spécifiques.
-                \item PolKit saura quoi répondre en fonction des "policy" paramétrées (des configurations qui définissent qui peut faire quoi, et quel logiciel a besoin de quels privilèges).
-                \item Cela évite donc de lancer des programmes en tant que super-utilisateur, ça évite également d'utiliser sudo pour des commandes n'en ayant pas besoin ou ne le supportant pas, la sécurité est donc accrue, et moins d'actions sont requises de la part de l'utilisateur (ce sont les applications qui demandent les droits, pas l'utilisateur).
-
+                \item En résumé, Polkit est un système de gestion des autorisations utilisé sur les systèmes Linux pour contrôler qui peut exécuter quelles actions avec quels privilèges. Il utilise des règles de politique définies dans des fichiers de configuration pour déterminer les autorisations accordées aux utilisateurs, et un démon qui s'exécute en arrière-plan pour surveiller les demandes d'autorisations et accorder les privilèges d'administrateur nécessaires.
                 \item Polkit est intégré aux distributions Ubuntu (depuis la version 8.04), Fedora (depuis la version 8), Mandriva (depuis la version 2008.1) et OpenSUSE (depuis la version 10.3).
                 \subsubsection{Utilisation des "policy"}
                 \begin{flushleft}
-                    \noindent Pour gérer les règles il faut donc éditer les fichiers de configuration avec les droits d'administration. La configuration se fait avec des règles et des actions :
+                    \noindent Les policy sont des fichiers de configuration utilisés par polkit, un système de gestion des droits d'accès qui gère les autorisations nécessaires pour exécuter des actions qui nécessitent des privilèges administratifs. Les policy contiennent des informations sur les actions qui peuvent être exécutées et les règles qui déterminent qui peut les exécuter et comment.
                     \begin{enumerate}
-                        \item Les Actions sont définies dans des fichiers XML .policy situés dans \textbf{/usr/share/polkit-1/actions} 
+                        \item Les Actions sont définies dans des fichiers XML .policy situés dans \code{/usr/share/polkit-1/actions}. 
+                        \begin{enumerate}
+                            \item Ces fichiers peuvent être utilisés par polkit pour contrôler l'accès aux actions administratives sur le système. Vous pouvez également créer et ajouter vos propres fichiers de policy dans le répertoire /etc/polkit-1/rules.d pour personnaliser les règles d'accès sur votre système. 
+                            \item Ces fichiers seront utilisés par polkit en plus des fichiers prédéfinis dans les autres répertoires, vous permettant de contrôler de manière plus fine l'accès aux actions administratives sur votre système.
+                        \end{enumerate}
                         \item Les règles d'autorisation sont définies dans les fichiers .rules JavaScript. On les trouve à deux endroits : \cite{PartVMan11:online}
                         \begin{enumerate}
-                            \item \textbf{/usr/share/polkit-1/rules.d} pour les paquets tiers peuvent utiliser (bien que peu, voire aucun, ne le fasse)
-                            \item \textbf{/etc/polkit-1/rules.d} pour la configuration locale.
+                            \item \code{/usr/share/polkit-1/rules.d} pour les paquets tiers peuvent utiliser (bien que peu, voire aucun, ne le fasse)
+                            \item \code{/etc/polkit-1/rules.d} pour la configuration locale.
                         \end{enumerate}
                     \end{enumerate}
                 \end{flushleft}
                 \subsubsection{Utilisation classique de l'appel système pkexec (à modifier)}
                 \begin{flushleft}
+                    \noindent Voici un exemple d'utilisation de pkexec pour installer un nouveau paquet logiciel sur un système Linux :
+                    \item \textbf{pkexec} Un programme de ligne de commande qui permet à un utilisateur d’exécuter des commandes comme un autre utilisateur. Si le programme est appelé sans argument utilisateur, la valeur par défaut est d’exécuter la commande en tant que root. Cette commande est très similaire à la commande sudo dans cet aspect. \cite{CVE2021425:online}
                     \begin{lstlisting}
- pkexec --user <username> <command>
+$ pkexec --user <username> <command>
+$ pkexec apt-get install [nom_du_paquet]
                     \end{lstlisting}
-                     \item \textbf{pkexec} Un programme de ligne de commande qui permet à un utilisateur d’exécuter des commandes comme un autre utilisateur. Si le programme est appelé sans argument utilisateur, la valeur par défaut est d’exécuter la commande en tant que root. Cette commande est très similaire à la commande sudo dans cet aspect. \cite{CVE2021425:online}
+                    \item Dans cet exemple, pkexec est utilisé pour exécuter la commande \code{apt-get install} avec des privilèges d'administrateur, ce qui permet à l'utilisateur actuel d'installer un nouveau paquet logiciel sans avoir besoin de connaître le mot de passe de l'utilisateur root.
+                    \item En résumé, l'utilisation classique de pkexec est d'exécuter des commandes en tant qu'utilisateur actuel avec des privilèges d'administrateur temporaires, afin de pouvoir effectuer des actions qui nécessitent des privilèges d'administrateur sans avoir besoin de connaître le mot de passe de l'utilisateur root.
                 \end{flushleft}
                 \subsubsection{Quelle est la différence entre pkexec et sudo ?}
-                \begin{flushleft}
-                    \noindent Dans le concept, ils font la même chose, permettant à un utilisateur d'exécuter un autre programme en tant qu'autre utilisateur
-                    \item Sudo et su donnent un contrôle total sur tout.
+                 \begin{flushleft}
+                    \noindent Les appels système pkexec et sudo sont tous deux des outils utilisés pour exécuter des commandes avec des privilèges d'administrateur sur un système Linux. Cependant, ils fonctionnent de manières légèrement différentes.
+                    \item L'appel système sudo est utilisé pour exécuter une commande en tant qu'utilisateur différent, généralement en tant qu'utilisateur root (l'utilisateur administrateur principal du système). 
+                    \item Pour utiliser sudo, vous devez connaître le mot de passe de l'utilisateur root ou avoir été ajouté à la liste des utilisateurs autorisés à utiliser sudo dans le fichier de configuration \code{/etc/sudoers}.
                     \item Pkexec fait partie d'un système d'outils plus vaste appelé Polkit. Cela prend un peu de temps pour le configurer, mais une fois sur place, il donne un contrôle beaucoup plus fin.
                     \item C'est une bonne idée pour s'isoler de certains dangers et avoir l'accès complet à tout dans le système.
-                    \item Vous pouvez ajouter sudo à n’importe quelle commande à exécuter à condition que l'utilisateur aie été ajouté au groupe des sudousers.
-                    \item Tandis que pour Pour pkexec, vous aurez besoin d’une configuration de stratégie pour la commande que vous souhaitez exécuter avec pkexec.
+                    \item L'appel système pkexec est utilisé pour exécuter une commande en tant qu'utilisateur actuel, mais en accordant temporairement des privilèges d'administrateur à cette commande. 
+                    \item Par exemple, si vous êtes connecté en tant qu'utilisateur foo, vous pouvez utiliser pkexec pour exécuter une commande en tant qu'utilisateur foo avec des privilèges d'administrateur. Contrairement à sudo, vous n'avez pas besoin de connaître le mot de passe de l'utilisateur root pour utiliser pkexec, mais vous devez être en mesure de fournir les informations d'authentification de votre compte utilisateur.
                 \end{flushleft}
             \end{flushleft}
    		\end{flushleft}
@@ -262,11 +276,13 @@ int main(int argc, char* argv[], char *envp[])
                 \end{center}
                 
             \underline{Ecriture hors-limite : }
-                \item Les langages de programmation tels que C offrent de puissantes fonctionnalités de gestion explicite de la mémoire et d’arithmétique des pointeurs. Cependant, cela se fait au détriment de l’absence de protection intégrée contre l’accès ou l’écrasement des données dans n’importe quelle partie de la mémoire.
+                \item L'écriture hors limite se produit lorsqu'un programme en C essaie d'écrire des données à un emplacement mémoire en dehors de l'espace alloué pour ces données. Cela peut se produire lorsqu'un programme tente d'accéder à un tableau en dehors de ses limites définies, ou lorsqu'un programme tente d'écrire dans une zone mémoire qui n'a pas été allouée pour lui.
+                \item L'écriture hors limite peut causer des problèmes graves pour un programme, tels que des plantages ou des comportements imprévisibles. Cela peut également entraîner des fuites de données sensibles ou des attaques de sécurité telles que des attaques par déni de service ou des violations de la mémoire.
+                \item Pour éviter l'écriture hors limite, il est important de s'assurer que les tableaux sont correctement dimensionnés et que les limites des tableaux sont vérifiées lors de l'accès aux éléments du tableau. Il est également important de s'assurer que l'espace mémoire est correctement alloué pour toutes les données utilisées par un programme, afin d'éviter d'essayer d'écrire dans des zones mémoire non allouées.
                 \item Un exemple courant est celui des tableaux de tableaux. C’est au programmeur de vérifier s’il accède à un élément qui se trouve dans la plage d’un tableau et qui ne dépasse pas sa taille.
             \item \underline{Pile d’appels :}
-                \item Il s’agit d’un concept fondamental dans le fonctionnement du logiciel. Un programme est construit à partir de plusieurs sous-routines qui s’appellent les unes les autres dans une logique particulière.
-                \item Lorsqu'un programme appelle une sous-routine, il faut d'une certaine manière mémoriser l'adresse à laquelle doit revenir s'exécuter le programme à la fin de la routine. 
+                 \item La pile d'appel est une structure de données utilisée par les systèmes d'exploitation pour stocker les informations sur les fonctions en cours d'exécution dans un programme. 
+                 \item Lorsqu'une fonction est appelée, des informations sur cette fonction sont empilées (ajoutées) à la pile d'appel. Lorsque la fonction se termine, ces informations sont dépilées (supprimées) de la pile.
                 \item Parmi les données stockées sur la pile pour la fonction main(), se trouvent les tableaux \textbf{argv} et \textbf{envp}.
                 \item En fait, ils sont situés juste à côté l’un de l’autre, de sorte que la fin de argv,argv[argc], est adjacente au début de envp,envp[0].
                 \begin{center}
@@ -274,9 +290,12 @@ int main(int argc, char* argv[], char *envp[])
                 \end{center}
             \item \underline{iconv\_open }
                 \item Il s’agit d’une commande Linux qui peut être utilisée comme fonction dans le code C. 
-                \item La fonction iconv\_open() alloue un descripteur de conversion approprié pour convertir des séquences d'octets du codage de caractères vers un autre.
-                \item 
-                \item L’un des moyens par lesquels iconv\_open() trouve une telle bibliothèque est de lire n’importe quel fichier présent dans la variable d’environnement GCONV\_PATH et de l’exécuter. \cite{iconvopenman:online}
+                \item La librairie iconv\_open est une fonction de la librairie libiconv qui permet de créer un descripteur de fichier pour une conversion de caractères spécifique. 
+                \item La variable d'environnement GCONV\_PATH indique l'emplacement des modules de conversion de caractères utilisés par la fonction iconv\_open, tandis que la variable gconv\_modules contient une liste des modules de conversion de caractères disponibles sur le système.
+                \item En utilisant ces variables d'environnement, la fonction iconv\_open peut être utilisée pour effectuer des conversions de caractères entre différents jeux de caractères, ce qui peut être utile lors de la manipulation de texte dans des applications qui doivent gérer des données dans plusieurs encodages de caractères différents.
+                \item Il est important de noter que la fonction iconv\_open ne peut pas exécuter directement de fichiers contenus dans le répertoire indiqué par la variable d'environnement GCONV\_PATH. Cette fonction ne fait que lire les modules de conversion de caractères contenus dans ce répertoire afin de pouvoir effectuer les conversions de caractères souhaitées.
+                \item Toutefois, il est possible qu'un fichier malveillant puisse être introduit dans le répertoire GCONV\_PATH et utilisé par la fonction iconv\_open pour causer des problèmes sur le système. Par exemple, un fichier contenant du code malveillant pourrait être introduit dans le répertoire et utilisé par la fonction iconv\_open pour effectuer des actions nuisibles sur le système, telles que des attaques par déni de service ou la collecte de données sensibles.
+                \item Il est donc important de s'assurer que le répertoire GCONV\_PATH ne contient que des modules de conversion de caractères fiables, et de surveiller régulièrement ce répertoire pour détecter tout fichier suspect. De plus, il est recommandé de mettre en place des mesures de sécurité adéquates pour protéger le système contre ce type d'attaques.
                 \item Compte tenu de sa capacité à contenir des références à des bibliothèques arbitraires qui sont ensuite exécutées, la variable GCONV\_PATH était notamment connue pour faciliter les exploits d’exécution de code. 
                 \item C’est pour cette raison que la variable d’environnement GCONV\_PATH est omise lors de l’exécution de programmes tels que pkexec, qui traitent de l’exécution de commandes avec des privilèges élevés temporaires.
                 \begin{center}
@@ -348,7 +367,7 @@ int main(int argc, char* argv[], char *envp[])
                 \item En d'autres termes, cette écriture hors limites nous permet de réintroduire une variable d’environnement « non sécurisée » dans l'environnement de "pkexec".
                 \item Cela définit la variable d’environnement PATH pour contenir une référence au répertoire execdir. 
                 \item La fonction main() va maintenant lire envp[0], qui est « unfichier », et essayer de trouver le chemin absolu de celui-ci dans le répertoire courant. 
-                \item Il le trouvera, comme nous l’avons créé :  \textbf{/execdir/unfichier}. Enfin, il écrasera envp[0] avec le chemin absolu execdir/unfichier.
+                \item Il le trouvera, comme nous l’avons créé :  \code{/execdir/unfichier}. Enfin, il écrasera envp[0] avec le chemin absolu execdir/unfichier.
             \item \underline{Utilisation de GCONV\_PATH}
             \item GCONV\_PATH utilise la fonction iconv\_open pour exécuter le fichier exécutable répertorié dans la variable d’environnement GCONV\_PATH.
             \item Malheureusement pour nous, le répertoire GCONV\_PATH est omis de l’environnement de pkexec lors de son exécution, en raison de ses problèmes de sécurité connus expliqués plus tôt.
@@ -404,15 +423,49 @@ int main(int argc, char* argv[], char *envp[])
    		\subsection{Démonstration}
 			\subsubsection{Fonction main()} 
 			\lstinputlisting{Code/main}  
+             \begin{flushleft}
+                \noindent Ce code déclare deux tableaux de chaînes de caractères : a\_argv et a\_envp. 
+                \item Le tableau a\_argv est initialisé avec un élément NULL, tandis que le tableau a\_envp est initialisé avec une liste d'environnements.
+                \begin{enumerate}
+                    \item Le tableau a\_argv est utilisé pour stocker les arguments passés à une fonction ou à un programme. Dans ce cas, a\_argv est initialisé avec un seul élément NULL, ce qui signifie qu'il ne contient aucun argument.
+                    \item Le tableau a\_envp est utilisé pour stocker les variables d'environnement d'un programme. Dans ce cas, a\_envp est initialisé avec une liste de variables d'environnement, notamment exploit, PATH, GCONV\_PATH, CHARSET, et SHELL. 
+                \end{enumerate}
+                \item Ces variables d'environnement peuvent être utilisées par un programme pour configurer son environnement d'exécution. 
+                \item La variable PATH spécifie le chemins où le programme peut rechercher les commandes exécutables, tandis que la variable SHELL peut être utilisée pour spécifier le shell par défaut utilisé par le programme. Dans notre cas on spécifie un SHELL non valide pour que g\_printerr(). 
+                \item Comme on va spécifier que ce n'est pas un encodage UTF-8 et que cette fonction renvoie par défault les messages en UTF-8, la fonction iconv\_open sera utilisée pour rechercher le fichier descripteur de conversion qui sera répertorié dans la variable d'environnement PATH.
+                \item Ce qui aura pour effet d'exécuter notre programme contenant un shell en mode root.
+            \end{flushleft}
    		\subsubsection{Création du dossier GCONV\_PATH et du fichier exploit dans le PATH} 
    		\lstinputlisting{Code/gconv_path}  
+            \begin{flushleft}
+                \noindent Fonction qui vérifie si le répertoire GCONV\_PATH=. existe. 
+                \item Si ce répertoire n'existe pas, la fonction le crée avec les permissions 0777 (lecture, écriture et exécution pour tous les utilisateurs) et crée un fichier exploit dans ce répertoire avec les mêmes permissions.
+            \end{flushleft}
+     
+            \begin{flushleft}
+                \noindent 
+            \end{flushleft}
             \subsubsection{Création du dossier exploit contenant un fichier module, qui exécutera le fichier malveillant lors l'appel à g\_printerr}
             \lstinputlisting{Code/iconv_open}  
+            \begin{flushleft}
+                \noindent Fonction qui vérifie si le répertoire exploit existe.
+                \item Si ce répertoire n'existe pas, la fonction le crée avec les permissions 0777 (lecture, écriture et exécution pour tous les utilisateurs) et crée un fichier gconv-modules dans ce répertoire. 
+                \item Ce fichier contient une chaîne de caractères qui indique au système que le bibliothèque partagée exploit.so est un module de conversion de caractères appelé exploit compatible avec le jeu de caractères NOT\_UTF8 (ce qu'on a défini nous même dans la variable d'environnement).
+            \end{flushleft}
             \subsubsection{Création du fichier malveillant contenant un code simple qui exécutera un shell avec les privilèges root}
             \lstinputlisting{Code/exploit}  
+            \begin{flushleft}
+                \noindent Crée un fichier exploit.c dans un répertoire exploit et y écrit un programme en C qui tente de prendre les privilèges du superutilisateur (root) en appelant la fonction setuid() et setgid(). 
+                \item Une fois le programme écrit dans le fichier, la fonction compile ce fichier en un bibliothèque partagée (fichier .so) en utilisant la commande gcc.
+            \end{flushleft}
+            
             \newpage
             \subsubsection{Fonction qui va s'occuper de vérifier si le système est vulnérable à la faille}
             \lstinputlisting{Code/checkVuln}  
+            \begin{flushleft}
+                \noindent Fonction qui vérifie si le système est vulnérable à l'exploit en utilisant un processus enfant.
+                \item Si pkexec renvoie la chaîne de caractères "pkexec --version" au début de son output, cela signifie que le système n'est pas vulnérable à l'exploit. Sinon, cela signifie que le système est vulnérable.
+            \end{flushleft}
 
 			\subsubsection{Le script qui permet d'exécuter le programme et d'effectuer une Demo de la faille} 
 			\lstinputlisting{../Code/PwnKit/Demo}  
@@ -466,59 +519,77 @@ passwd root
         \end{enumerate}
    \subsection{Pourquoi ça fonctionne ainsi ? Pourquoi est-il si simple de changer le mot de passe administrateur ?} 
    \begin{flushleft}
-       \noindent Les mots de passe sont destinés à empêcher l'accès de l'extérieur (réseau, Internet), et ils le font. Cependant, l'accès physique est un accès root.
-        \item C'est une utilisation standard du noyau.
-        \item Il indique simplement au système de monter le système de fichier racine en lecture-écriture de sorte qu'on puisse modifier un fichier mal configuré ou changer un mot de passe.
-       \item À moins que vous ne cryptiez l'intégralité de votre partition, il est toujours possible de démarrer à partir d'un disque optique ou d'un lecteur flash et d'accéder à tous vos fichiers. De cette façon, vous pouvez également modifier les fichiers qui stockent les mots de passe des utilisateurs.
-       \item Donc si quelqu'un peut toucher à votre machine, il peut y entrer.
+       \noindent Il est possible de modifier le mot de passe de l'utilisateur root via GRUB sur les systèmes Linux car GRUB permet de démarrer le système en mode sans échec, ce qui offre un accès à un shell avec des privilèges d'administrateur complets. 
+       \item En mode sans échec, vous pouvez exécuter des commandes qui ont des effets sur l'ensemble du système, y compris la modification du mot de passe de l'utilisateur root.
+       \item Toutefois, cette méthode est également considérée comme une vulnérabilité de sécurité, car elle permet à quiconque d'accéder à la console du GRUB de changer le mot de passe de l'utilisateur root sans autorisation.
+       \item Pour protéger votre système contre ce type d'attaque, il est recommandé de configurer GRUB pour demander un mot de passe avant de permettre la modification du mot de passe administrateur, j'explique cela dans la section suivante.
    \end{flushleft}
 
    \subsection{Comment protéger le grub pour ne plus que cette faille soit possible} 
-        \subsubsection{Configurer GRUB2 pour qu'un mot de passe ne soit exigé que pour les saisie de modification.} 
-        \begin{flushleft}
-            \noindent Pour demander une authentification de mot de passe afin de modifier les entrées GRUB2, suivre les étapes suivantes :
-            \item Un mot de passe sera alors requis pour modifier les entrées du menu mais pas pour démarrer les entrées de menu existantes. 
-            \item Pour cela, créez un mot de passe avec la commande suivante. Vous aurez à entrer un mot de passe, confirmer et ne surtout pas oublier le mot de passe que vous avez encodé.
-       \begin{lstlisting}
-grub-mkpasswd-pbkdf2
-       \end{lstlisting}
-       \begin{center}
-           \includegraphics[scale=0.6]{grub password}
-       \end{center}
-            \item Copiez le mot de passe hashé
-            \item Définissez l’utilisateur GRUB à l’aide du hachage généré et déclarez-le en tant que super-utilisateur dans le fichier de configuration comme ci-dessous \code{/etc/grub.d/40\_custom}
-            \begin{center}
-                \includegraphics[scale=0.6]{grub password fichier modifiÃ©}
-            \end{center}
-            \item Installez la configuration modifiée via la commande ci-dessous et testez-la par la suite.
+        \subsubsection{Configurer GRUB2 pour qu'un mot de passe ne soit exigé pour les saisie de modifications} 
+        \begin{enumerate}
+            \item Ouvrez un terminal et exécutez la commande sudo su pour devenir superutilisateur.
+            \item Exécutez la commande \code{sudo grub2-mkpasswd-pbkdf2} pour créer un mot de passe pour protéger le grub. Lorsque vous êtes invité à entrer un mot de passe, entrez le mot de passe que vous souhaitez utiliser pour protéger le grub.
+            \item Lorsque le mot de passe est créé, vous verrez un message contenant une chaîne de caractères cryptés. Par exemple, si vous avez choisi le mot de passe "password" comme mot de passe pour protéger le grub, le message contiendra une chaîne de caractères cryptés comme ceci : \code{grub.pbkdf2.sha512.10000.C8B6E7E6FB...}
+            \item Copiez cette chaîne de caractères.
+            \item Exécutez la commande \code{sudo vi /etc/grub.d/40\_custom} pour ouvrir le fichier de configuration du grub dans l'éditeur vi. Si vous utilisez un système différent de OpenSUSE, le fichier de configuration peut se trouver dans un emplacement différent, comme /etc/grub.d/60\_custom.
+            \item Ajoutez les lignes suivantes au fichier de configuration :
             \begin{lstlisting}
-sudo grup-update
+set superusers="root"
+password_pbkdf2 root [la chaîne de caractères...]
             \end{lstlisting}
-
-
-        \end{flushleft}
-        \subsubsection{Configurer GRUB 2 pour qu'un mot de passe soit exigé pour les saisies de modification et de booting}
+            \item Par exemple, si vous avez choisi le mot de passe "password" comme mot de passe pour protéger le grub et que la chaîne de caractères cryptés générée à l'étape 3 est \code{grub.pbkdf2.sha512.10000.C8B6E7E6FB}, les lignes que vous ajouterez au fichier de configuration ressembleront à ceci :
+            \begin{lstlisting}
+set superusers="root"
+password_pbkdf2 root grub.pbkdf2.sha512.10000.C8B6E7E6FB
+            \end{lstlisting}
+            \item Enregistrez et fermez le fichier de configuration
+            \item Pour appliquer les modifications, exécutez la commande sudo grub2-mkconfig -o /boot/grub2/grub.cfg pour mettre à jour le fichier de configuration du grub.
+            \item Redémarrez votre système pour que les modifications prennent effet.
+        \end{enumerate}
+        
+        \newpage
+        \subsubsection{Autoriser les modifications du mot de passe que depuis un certain emplacement}
         \begin{flushleft}
-            \noindent Définir un mot de passe comme plus haut protègent les entrées de menu de modifications non autorisées, mais pas de booting non autorisé. 
-            \item Pour demander un mot de passe de booting d'entrée, suivre ces étapes après avoir défini le mot de passe avec grub2-setpassword :
+            \noindent Il existe d'autres méthodes pour protéger le GRUB contre les modifications non autorisées du mot de passe administrateur. 
+            \item Par exemple, vous pouvez configurer le GRUB pour n'autoriser les modifications du mot de passe administrateur que depuis un certain emplacement, comme une clé USB ou un disque dur externe. Cela empêchera les personnes malveillantes d'accéder à votre ordinateur et de modifier le mot de passe administrateur sans disposer de la clé USB ou du disque dur externe autorisé.
+             \item Pour configurer le GRUB de cette manière, vous pouvez suivre les étapes suivantes :
             \begin{enumerate}
-                \item Ouvrir un fichier \textbf{/boot/grub/grub.cfg}
-                \item Cherchez l'entrée boot que vous souhaitez protéger avec le mot de passe en cherchant des lignes commençant par \textbf{menuentry}
-                \item Supprimer le paramètre \textbf{--unrestricted} du bloc d'entrée de menu.
-                \item Enregistrer et fermer le fichier.
+                \item Ouvrez un terminal et exécutez la commande sudo su pour devenir superutilisateur.
+                \item Pour autoriser les modifications du mot de passe administrateur que depuis un certain emplacement, comme une clé USB ou un disque dur externe, vous pouvez configurer le GRUB en ajoutant les lignes suivantes au fichier de configuration du GRUB, dans notre cas : \code{/etc/grub.d/40\_custom}.
+                \begin{lstlisting}
+if [ -n "$GRUB_AUTH" ]; then
+  set pager=1
+  menuentry "Modify password" {
+    [ -f (hd0,gpt1)/boot/grub/password.lst ] && cat
+    (hd0,gpt1)/boot/grub/password.lst | grub2-set-password
+    [ -f (hd0,gpt1)/boot/grub/password.lst ] || grub2-set-password
+    [ -f (hd0,gpt1)/boot/grub/password.lst ] 
+    && [ -f (hd0,gpt1)/boot/grub/grub.cfg ] 
+    && cp (hd0,gpt1)/boot/grub/grub.cfg /boot/grub2/grub.cfg
+  }
+fi
+                \end{lstlisting}
+                \item Dans ces lignes, remplacez \textbf{(hd0,gpt1)} par l'identifiant (UUID) du périphérique de stockage que vous souhaitez utiliser pour autoriser les modifications du mot de passe administrateur. Vous pouvez obtenir l'identifiant du périphérique de stockage en exécutant la commande \code{sudo blkid}.
+                \item Une fois que vous avez ajouté ces lignes au fichier de configuration du GRUB, enregistrez et fermez le fichier, puis mettez à jour le fichier de configuration en exécutant la commande \code{sudo grub2-mkconfig -o /boot/grub2/grub.cfg}. \item Redémarrez ensuite votre système pour que les modifications prennent effet.
+                \item Lorsque vous redémarrez votre système, vous devrez saisir le mot de passe que vous avez choisi pour protéger l'accès au menu du GRUB. 
+                \item Une fois dans le menu du GRUB, vous pourrez utiliser la clé USB ou le disque dur externe que vous avez configuré pour autoriser les modifications du mot de passe administrateur. 
+                \item Si vous ne disposez pas de la clé USB ou du disque dur externe autorisé, vous ne pourrez pas changer le mot de passe administrateur depuis le menu du GRUB.
+                \item Redémarrez votre système pour que les modifications prennent effet.
             \end{enumerate}
         \end{flushleft}
         
+        \newpage
         \section{Conclusion}
         \begin{flushleft}
-            \item En conclusion une faille qui tente d'exploiter des vulnérabilités de dépassement de mémoire d'applications sont des attaques très efficaces.
-            \item Ces attaques consistent à exécuter du code arbitraire afin de compromettre la cible. 
+            \noindent En conclusion, Linux est un système d'exploitation populaire et puissant, mais comme tout autre système d'exploitation, il n'est pas exempt de failles de sécurité. Les failles de sécurité les plus courantes sur Linux incluent les failles de type "buffer overflow", qui peuvent permettre à un attaquant d'exécuter du code malveillant sur un système Linux et de prendre le contrôle du système.
             \item Dans le cas de la faille de sécurité que j'ai expliquée, son but consistait d'injecter du code malveillant dans les variables d'environnement du code permettant d'exécuter un shell avec les privilèges root.
-            \item Afin de protéger le système, il est nécessaire d'appliquer rapidement les patchs fournis par les développeurs en mettant régulièrement à jour son système. 
+            \item Il est également possible de modifier le mot de passe root avec le grub, ce qui peut permettre à un attaquant d'accéder au système en tant que superutilisateur et d'exécuter des commandes avec les privilèges les plus élevés. 
+            \item Pour protéger votre système Linux contre les failles de sécurité, il est important de maintenir régulièrement votre système à jour en installant les dernières mises à jour de sécurité, et de suivre les meilleures pratiques de sécurité, comme la création de mots de passe forts et l'utilisation de comptes utilisateur séparés pour limiter l'accès aux fonctionnalités administratives.
             \item De tenter au maximum de fiabiliser l'OS pour qu'il ne soit pas vulnérable aux dépassements de tampon. Auditer des programmes compilés à l'aide d'outils tels que BFBTester. Je ne détaillerais pas plus que ça ce programme mais il est utile pour tester de manière pro-active des programmes et vérifier que ceux-ci ne provoquent pas de dépassements de mémoire.
             \item Il faut également faire attention à protéger sa machine contre les attaques physiques. Si rien n'a été fait pour sécuriser son GRUB et que l'intégralité du disque n'a pas été crypté. Un attaquant peut de manière simple obtenir l'accès root et faire n'importe quoi sur la machine.
-
         \end{flushleft}
+
         \newpage
         \nocite{*}
 	\bibliography{bibliozq}
