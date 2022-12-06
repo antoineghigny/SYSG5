@@ -99,7 +99,7 @@ void checkVulnerability() {
 
     // Si la chaîne de caractères "pkexec --version" est présente au début
     // du tampon buf, cela signifie que le système n'est pas vulnérable à l'exploit.
-    if (strstr(buf, "pkexec --version") == buf) {
+    if (strstr(buf, "pkexec --version") != NULL) {
       puts("System is not vulnerable");
       exit(0);
 
