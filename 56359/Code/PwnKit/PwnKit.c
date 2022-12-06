@@ -111,7 +111,6 @@ void checkVulnerability() {
     exit(0);
   }
 
-  wait(0);
   close(pipefd[0]);
   close(pipefd[1]);
 }
