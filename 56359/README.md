@@ -24,7 +24,10 @@ Toutes les explications nécéssaires sont disponibles dans le rapport pdf.
 ```
 56359\Code\SetupEnvironnement\
 ```
-- Le script script.sh Permet d'inclure les sources complètes de debian dans le fichier /apt/etc/sources.list, de télécharger la liste des pacjets de debian. Mais également d'installer des packets nécéssaires au bon fonctionnement du programme, tel que git, make ou encore gcc.
+- chmod u+x report.sh
+- ./report.sh
+
+Le script script.sh Permet d'inclure les sources complètes de debian dans le fichier /apt/etc/sources.list, de télécharger la liste des pacjets de debian. Mais également d'installer des packets nécéssaires au bon fonctionnement du programme, tel que git, make ou encore gcc.
 
 ```
 56359\Code\PwnKit\

