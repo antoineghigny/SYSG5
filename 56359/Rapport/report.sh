@@ -1,7 +1,7 @@
-pdflatex SYSG5\ -\ Failles\ de\ sécurité\ linux.tex
-bibtex SYSG5\ -\ Failles\ de\ sécurité\ linux
-pdflatex SYSG5\ -\ Failles\ de\ sécurité\ linux.tex
-pdflatex SYSG5\ -\ Failles\ de\ sécurité\ linux.tex
+pdflatex AntoineGhigny_ExploitatonDeFaillesDeSecurite.tex
+bibtex AntoineGhigny_ExploitatonDeFaillesDeSecurite.tex
+pdflatex AntoineGhigny_ExploitatonDeFaillesDeSecurite.tex
+pdflatex AntoineGhigny_ExploitatonDeFaillesDeSecurite.tex
 
 rm *.out
 rm *.toc
