@@ -9,6 +9,7 @@ Exécuter le script : script.sh
 - pdflatex : Permet de compiler et générer un document PDF à partir du fichier TEX
 - bibtex : Permet de gérer les rérérences bibliographiques pour les inclure dans le fichier LATEX
 - pdflatex Permet d'inclure les références bibliographiques dans le rapport, mais également d'ajouter la table des matières après avoir lu une première fois le document tex en ayant compilé une première fois avant.
+- pdflatex : Une fois que le rapport a été compilé avec les références bibliographiques, intégrer celles-ci dans les citations au cours du document
 
 # Comment setup l'environnement de dévelopement ?
 
