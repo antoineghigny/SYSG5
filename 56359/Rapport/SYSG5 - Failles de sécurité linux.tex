@@ -150,14 +150,14 @@ sudo dd bs=4M if=Downloads/debian-10.7.0-amd64-DVD-1.iso of=/dev/sdb conv=fdatas
       
         \subsubsection{Installation des packets requis}
        \item Afin de pouvoir installer des packets, il faudra update pour télécharger les informations des packages des sources configurées. 
-       \item Pour cela, accédez en écriture au fichier \code{/etc/apt/sources.list} via la commande ci-dessous ou exécutez le script mit à disposition.
+       \item Pour cela, accédez en écriture au fichier \code{/etc/apt/sources} via la commande ci-dessous ou exécutez le script mit à disposition.
 
        \begin{lstlisting}
 nano /etc/apt/sources.list
        \end{lstlisting}      
 
        \begin{center}
-            \includegraphics[scale=0.6]{sources.list}
+            \includegraphics[scale=0.6]{sources}
         \end{center}
         
        \item Mettez en commentaire la ligne concernant le cdrom installé [Debian GNU/Linux...]. Sinon il vous sera demandé d'insérer le disque qui a permis l'installation comme ci-dessous.             
@@ -342,7 +342,7 @@ int main(int argc, char* argv[], char *envp[])
                 \item Comme décrit précédemment, la fonction main(), comme toutes les autres fonctions, peut accéder à ses arguments et variables grâce à la pile d’appels, qui les stocke de manière ordonnée. Les tableaux argv et envp sont stockés côte à côte.
                 \item  Etant donné qu'argc est égal à 0 cela signifie que argv[1] pointe vers envp[0] comme illuctré ci-dessous
                 \begin{center}
-                    \includegraphics[scale=0.7]{ecriture environnement.png}
+                    \includegraphics[scale=0.7]{ecriture}
                 \end{center}
                 \item À la ligne 610, le chemin du programme à exécuter est lu hors limites à partir de argv[1] (c’est-à-dire envp[0]), et on va faire pointer cela  vers « un fichier malveillant » comme vu ci dessous.
                 \begin{center}
@@ -383,7 +383,7 @@ int main(int argc, char* argv[], char *envp[])
                 \item Ce fichier contiendra un code simple qui exécute un shell sous les privilèges root.
             \end{enumerate}
             \begin{center}
-                \includegraphics[scale=0.4]{pile d'exécution GCONV_PATH} \cite{CVE2021425:online}
+                \includegraphics[scale=0.4]{exec} \cite{CVE2021425:online}
             \end{center}
             \item Cela définit la variable d’environnement PATH pour qu’elle contienne une référence à au répertoire GCONV\_PATH=. 
             \item La fonction main() va maintenant lire envp[0], qui est « exploit », et essayer de trouver le chemin absolu de celui-ci dans la liste des répertoires PATH. 
@@ -409,7 +409,7 @@ int main(int argc, char* argv[], char *envp[])
                 \item Ce fichier contiendra un code simple qui exécute un shell sous les privilèges root.
             \end{enumerate}
             \begin{center}
-                    \includegraphics[scale=0.5]{pile d'appel programme final} 
+                    \includegraphics[scale=0.5]{pileappel} 
             \end{center}
             \item pkexec va accéder à envp[0] et comme vu au dessus, va aller au chemin absolu de GCONV\_PATH=./exploit, où se trouve notre fichier malveillant et le réécrire dans envp[0].
             \item Ensuite il procédera à la validation des variables d'environnement que nous avons fournies. Une par une jusqu'à arriver à celle située dans envp[2].
@@ -425,10 +425,11 @@ int main(int argc, char* argv[], char *envp[])
              \begin{flushleft}
                 \noindent Ce code déclare deux tableaux de chaînes de caractères : a\_argv et a\_envp. 
                 \item Le tableau a\_argv est initialisé avec un élément NULL, tandis que le tableau a\_envp est initialisé avec une liste d'environnements.
-                \begin{itemsize}
+                \begin{itemize}
+
                     \item Le tableau a\_argv est utilisé pour stocker les arguments passés à une fonction ou à un programme. Dans ce cas, a\_argv est initialisé avec un seul élément NULL, ce qui signifie qu'il ne contient aucun argument.
                     \item Le tableau a\_envp est utilisé pour stocker les variables d'environnement d'un programme. Dans ce cas, a\_envp est initialisé avec une liste de variables d'environnement, notamment exploit, PATH, GCONV\_PATH, CHARSET, et SHELL. 
-                \end{itemsize}
+                \end{itemize}
                 \item Ces variables d'environnement peuvent être utilisées par un programme pour configurer son environnement d'exécution. 
                 \item La variable PATH spécifie le chemins où le programme peut rechercher les commandes exécutables, tandis que la variable SHELL peut être utilisée pour spécifier le shell par défaut utilisé par le programme. Dans notre cas on spécifie un SHELL non valide pour que g\_printerr(). 
                 \begin{itemize}
