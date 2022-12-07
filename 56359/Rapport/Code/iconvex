@@ -1,0 +1,57 @@
+#include <iconv.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+int main(void) {
+    // Définissez le répertoire GCONV_PATH
+    setenv("GCONV_PATH", "/usr/local/lib/gconv", 0);
+
+    // Ouvrez un descripteur de conversion pour convertir de ASCII à UTF-8
+    iconv_t cd = iconv_open("UTF-8", "ASCII");
+
+    // Vérifiez si l'ouverture a réussi
+    if (cd == (iconv_t)-1) {
+        perror("iconv_open");
+        exit(1);
+    }
+
+    // Définissez la chaîne à convertir
+    char *in_str = "Hello, world!";
+
+    // Calculez la taille maximale de la chaîne convertie
+    size_t in_bytes = strlen(in_str);
+    size_t out_bytes = in_bytes * 4;
+
+    // Allouez de la mémoire pour la chaîne convertie
+    char *out_str = malloc(out_bytes);
+    if (out_str == NULL) {
+        perror("malloc");
+        exit(1);
+    }
+
+    // Convertissez la chaîne
+    char *in_ptr = in_str;
+    char *out_ptr = out_str;
+    size_t ret = iconv(cd, &in_ptr, &in_bytes, &out_ptr, &out_bytes);
+
+    // Vérifiez si la conversion a réussi
+    if (ret == (size_t)-1) {
+        perror("iconv");
+        exit(1);
+    }
+
+    // Fermez le descripteur de conversion
+    if (iconv_close(cd) == -1) {
+        perror("iconv_close");
+        exit(1);
+    }
+
+    // Affichez la chaîne convertie
+    printf("%s\n", out_str);
+
+    // Libérez la mémoire allouée pour la chaîne convertie
+    free(out_str);
+
+    return 0;
+}

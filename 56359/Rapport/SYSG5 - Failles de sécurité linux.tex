@@ -296,14 +296,27 @@ int main(int argc, char* argv[], char *envp[])
                 \item La librairie iconv\_open est une fonction de la librairie libiconv qui permet de créer un descripteur de fichier pour une conversion de caractères spécifique. 
                 \item La variable d'environnement GCONV\_PATH indique l'emplacement des modules de conversion de caractères utilisés par la fonction iconv\_open, tandis que la variable gconv\_modules contient une liste des modules de conversion de caractères disponibles sur le système.
                 \item En utilisant ces variables d'environnement, la fonction iconv\_open peut être utilisée pour effectuer des conversions de caractères entre différents jeux de caractères, ce qui peut être utile lors de la manipulation de texte dans des applications qui doivent gérer des données dans plusieurs encodages de caractères différents.
+                \begin{itemize}
+                    \item Pour utiliser iconv, vous devez d'abord utiliser iconv\_open pour ouvrir un descripteur de conversion en spécifiant les jeux de caractères d'entrée et de sortie souhaités. 
+                    \item Ensuite, vous pouvez utiliser la fonction iconv en passant ce descripteur ainsi que la chaîne à convertir en tant que arguments. La fonction iconv convertira alors la chaîne et retournera la chaîne convertie.
+                \end{itemize}
                 \item Il est important de noter que la fonction iconv\_open ne peut pas exécuter directement de fichiers contenus dans le répertoire indiqué par la variable d'environnement GCONV\_PATH. Cette fonction ne fait que lire les modules de conversion de caractères contenus dans ce répertoire afin de pouvoir effectuer les conversions de caractères souhaitées.
-                \item Toutefois, il est possible qu'un fichier malveillant puisse être introduit dans le répertoire GCONV\_PATH et utilisé par la fonction iconv\_open pour causer des problèmes sur le système. Par exemple, un fichier contenant du code malveillant pourrait être introduit dans le répertoire et utilisé par la fonction iconv\_open pour effectuer des actions nuisibles sur le système, telles que des attaques par déni de service ou la collecte de données sensibles.
-                \item Il est donc important de s'assurer que le répertoire GCONV\_PATH ne contient que des modules de conversion de caractères fiables, et de surveiller régulièrement ce répertoire pour détecter tout fichier suspect. De plus, il est recommandé de mettre en place des mesures de sécurité adéquates pour protéger le système contre ce type d'attaques.
-                \item Compte tenu de sa capacité à contenir des références à des bibliothèques arbitraires qui sont ensuite exécutées, la variable GCONV\_PATH était notamment connue pour faciliter les exploits d’exécution de code. 
-                \item C’est pour cette raison que la variable d’environnement GCONV\_PATH est omise lors de l’exécution de programmes tels que pkexec, qui traitent de l’exécution de commandes avec des privilèges élevés temporaires.
+                \begin{itemize}
+                    \item Toutefois, il est possible qu'un fichier malveillant puisse être introduit dans le répertoire GCONV\_PATH et utilisé par la fonction iconv\_open pour causer des problèmes sur le système. Par exemple, un fichier contenant du code malveillant pourrait être introduit dans le répertoire et utilisé par la fonction iconv\_open pour effectuer des actions nuisibles sur le système.
+                    \item Il est donc important de s'assurer que le répertoire GCONV\_PATH ne contient que des modules de conversion de caractères fiables, et de surveiller régulièrement ce répertoire pour détecter tout fichier suspect.
+                    \item Compte tenu de sa capacité à contenir des références à des bibliothèques arbitraires qui sont ensuite exécutées, la variable GCONV\_PATH était notamment connue pour faciliter les exploits d’exécution de code. 
+                    \item C’est pour cette raison que la variable d’environnement GCONV\_PATH est omise lors de l’exécution de programmes tels que pkexec, qui traitent de l’exécution de commandes avec des privilèges élevés temporaires.
+                \end{itemize}
+
                 \begin{center}
                     \includegraphics[scale=0.5]{iconv_open}
                 \end{center}
+
+                \item Voici un exemple de l'utilisation classique de iconv\_open
+                \begin{center}
+   		\lstinputlisting{Code/iconvex}  
+                \end{center}
+                
                 \cite{iconvman:online}
                 \cite{gconvpath:online}
             \subsubsection{Explication ligne par ligne, pourquoi une écriture hors limite est provoquée et d'où provient la faille dans le code source de pkexec}
@@ -328,6 +341,7 @@ int main(int argc, char* argv[], char *envp[])
 567 }
                 \end{lstlisting}
                 \item Ce qui veut dire que si nous passons à execve un NULL. argc serait égal à 0. La boucle sera terminée et n serait à 1.
+                \newpage
                 \item La ligne 610 argv[n] dépasse la longueur du tableau (qui est vide), ce qui signifie que le code lit au-delà des limites du tableau comme ci-dessous.
                 \begin{lstlisting}
 610 path = g_strdup (argv[n]);
@@ -355,7 +369,6 @@ int main(int argc, char* argv[], char *envp[])
                 \item Eh bien, oui, envp[0] contient la première variable d’environnement qui est passée à pkexec lors de son exécution. 
                 \item De plus, nous pouvons contrôler les variables d’environnement que nous voulons transmettre à pkexec lorsque nous l’exécutons. 
                 \item \textbf{Ce qui signifie qu'envp[0] est sous notre contrôle.}
-                \newpage
                 \subsubsection{Ajout du code malicieux via notre environnement contrôlé}
                 \item \underline{Utilisation de notre Pile d'appel}
                      \item Maintenant, appelons pkexec avec les conditions suivantes:
@@ -456,6 +469,7 @@ int main(int argc, char* argv[], char *envp[])
                 \end{itemize}
                 
             \end{flushleft}
+            \newpage
             \subsubsection{Création du fichier malveillant contenant un code simple qui exécutera un shell avec les privilèges root}
             \lstinputlisting{Code/exploit}  
             \begin{flushleft}
@@ -471,15 +485,6 @@ int main(int argc, char* argv[], char *envp[])
                 \item Une fois le programme écrit dans le fichier, la fonction compile ce fichier en un bibliothèque partagée (fichier .so) en utilisant la commande gcc.
             \end{flushleft}
             
-            \newpage
-            \subsubsection{Fonction qui va s'occuper de vérifier si le système est vulnérable à la faille}
-            \lstinputlisting{Code/checkVuln}  
-            \begin{flushleft}
-                \noindent Fonction qui vérifie si le système est vulnérable à l'exploit en utilisant un processus enfant.
-                \item Si pkexec renvoie la chaîne de caractères "pkexec --version" au début de son output, cela signifie que le système n'est pas vulnérable à l'exploit. Sinon, cela signifie que le système est vulnérable.
-            \end{flushleft}
-            
-            \newpage
 			\subsubsection{Le script qui permet d'exécuter le programme et d'effectuer une Demo de la faille} 
 			\lstinputlisting{../Code/PwnKit/Demo}  
    
@@ -509,7 +514,7 @@ chmod 0755 /usr/bin/pkexec
             \end{flushleft}
             \subsection{Est-il possible de vérifier les preuves d’exploitation?}
             \begin{flushleft}
-                \noindent Oui, cette technique d’exploitation laisse par default des traces dans les logs (soit « La valeur de la variable SHELL n’a pas trouvé le fichier /etc/shells » soit « La valeur de la variable d’environnement [...] contient du contenu suspect »). 
+                \noindent Oui, cette technique d’exploitation laisse par default des traces dans les logs (soit « La valeur de la variable SHELL n’a pas trouvé le fichier \code{/etc/shells} » soit « La valeur de la variable d’environnement [...] contient du contenu suspect »). 
                 \item Cependant, veuillez noter que cette vulnérabilité est également exploitable sans laisser de traces dans les logs étant donné que l'attaquant dispose alors des permissions root sur le système.
             \end{flushleft}
     \newpage
@@ -543,6 +548,7 @@ passwd root
         \begin{enumerate}
             \item Ouvrez un terminal et exécutez la commande sudo su pour devenir superutilisateur.
             \item Exécutez la commande \code{sudo grub2-mkpasswd-pbkdf2} pour créer un mot de passe pour protéger le grub. Lorsque vous êtes invité à entrer un mot de passe, entrez le mot de passe que vous souhaitez utiliser pour protéger le grub.
+            \item La commande grub2-mkpasswd-pbkdf2 demande d'entrer un mot de passe en clair, puis génère un mot de passe crypté en utilisant l'algorithme de hachage PBKDF2.
             \item Lorsque le mot de passe est créé, vous verrez un message contenant une chaîne de caractères cryptés. Par exemple, si vous avez choisi le mot de passe "password" comme mot de passe pour protéger le grub, le message contiendra une chaîne de caractères cryptés comme ceci : \code{grub.pbkdf2.sha512.10000.C8B6E7E6FB...}
             \item Copiez cette chaîne de caractères.
             \item Exécutez la commande \code{sudo vi /etc/grub.d/40\_custom} pour ouvrir le fichier de configuration du grub dans l'éditeur vi. Si vous utilisez un système différent de OpenSUSE, le fichier de configuration peut se trouver dans un emplacement différent, comme /etc/grub.d/60\_custom.
@@ -557,8 +563,11 @@ set superusers="root"
 password_pbkdf2 root grub.pbkdf2.sha512.10000.C8B6E7E6FB
             \end{lstlisting}
             \item Enregistrez et fermez le fichier de configuration
-            \item Pour appliquer les modifications, exécutez la commande sudo grub2-mkconfig -o /boot/grub2/grub.cfg pour mettre à jour le fichier de configuration du grub.
+            \item Pour appliquer les modifications, \code{sudo grub2-mkconfig -o /boot/grub2/grub.cfg} pour mettre à jour le fichier de configuration du grub.
             \item Redémarrez votre système pour que les modifications prennent effet.
+            \begin{center}
+                \includegraphics{passwordrequired}
+            \end{center}
         \end{enumerate}
         
         \newpage
